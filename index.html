@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GESTOR MAPEADO - SEMSA</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --navy:#072e50; --navy2:#034b75; --sky:#1da1f2; --sky-d:#1a91da; --sky-soft:#a5d0f5;
+  --panel:#f0f8ff; --line:#cbd5e1; --line2:#94a3b8; --ink:#0f172a; --ink2:#334155; --muted:#64748b;
+  --green:#10b981; --green-d:#059669; --red:#e0245e;
+}
+*{box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(to right,var(--navy),var(--navy2));background-attachment:fixed;color:#14171a;margin:0;padding:20px 20px 60px;min-height:100vh;display:flex;flex-direction:column}
+.wrap{max-width:1440px;width:100%;margin:0 auto}
+
+/* Cabeçalho */
+.app-header{display:flex;align-items:center;justify-content:center;gap:25px;margin:0 auto 20px;padding:20px 35px;background:rgba(255,255,255,.06);border-radius:16px;border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(10px);box-shadow:0 8px 25px rgba(0,0,0,.15)}
+.app-logo{width:280px;height:auto;max-height:90px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))}
+.app-title-group{display:flex;flex-direction:column;justify-content:center;border-left:2px solid rgba(255,255,255,.2);padding-left:25px}
+.app-title-group h1{color:#fff;font-size:28px;font-weight:800;margin:0 0 6px;letter-spacing:.5px;text-shadow:0 2px 4px rgba(0,0,0,.3);text-transform:uppercase}
+.app-title-group h2{color:var(--sky-soft);font-size:15px;font-weight:600;margin:0;text-transform:uppercase;letter-spacing:1.5px}
+
+/* Abas */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:0 4px}
+.tab{background:rgba(255,255,255,.08);color:#dbeafe;border:1px solid rgba(255,255,255,.12);border-bottom:none;padding:11px 18px;border-radius:12px 12px 0 0;font-size:13px;font-weight:700;letter-spacing:.6px;cursor:pointer;text-transform:uppercase;transition:.2s;white-space:nowrap}
+.tab:hover{background:rgba(255,255,255,.16);color:#fff}
+.tab.active{background:var(--panel);color:var(--navy2);border-color:var(--panel)}
+
+/* Container */
+.container{background:var(--panel);border-radius:0 16px 16px 16px;box-shadow:0 4px 15px rgba(0,0,0,.15);overflow:hidden}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:16px 25px;border-bottom:1px solid var(--line);background:#fff}
+.toolbar .sep{flex:1}
+.field{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase}
+.field input{padding:8px 14px;border:1px solid var(--line2);border-radius:9999px;font-size:14px;font-weight:800;color:var(--navy2);outline:none;width:110px;letter-spacing:1px}
+.field input:focus,.search:focus{border-color:var(--sky)}
+.search{padding:9px 16px;border:1px solid var(--line2);border-radius:9999px;font-size:14px;outline:none;min-width:240px;background:#fff}
+.btn{padding:9px 18px;background:var(--sky);color:#fff;border:none;border-radius:9999px;cursor:pointer;font-size:13px;font-weight:700;transition:.2s;white-space:nowrap}
+.btn:hover{background:var(--sky-d)}
+.btn-success{background:var(--green)}.btn-success:hover{background:var(--green-d)}
+.btn-ghost{background:#fff;color:var(--sky);border:1px solid var(--sky)}.btn-ghost:hover{background:#e8f5fd}
+.btn-danger-ghost{background:#fff;color:var(--red);border:1px solid #f4b4c8}.btn-danger-ghost:hover{background:#fdecf1}
+.status{font-size:12px;color:var(--muted);font-weight:500}
+
+.section{padding:22px 25px}
+.section-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;margin-bottom:16px}
+.section-head h3{font-size:17px;margin:0;color:var(--ink);text-transform:uppercase;letter-spacing:.4px}
+.section-head .sub{font-size:12px;color:var(--muted);font-weight:600;margin-top:3px}
+
+/* KPIs */
+.kpis{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 18px;min-width:110px;flex:1;box-shadow:0 2px 4px rgba(0,0,0,.02)}
+.kpi .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.4px}
+.kpi .v{font-size:24px;font-weight:800;color:var(--ink);margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi.main{background:var(--navy2);border-color:var(--navy2)}
+.kpi.main .l{color:var(--sky-soft)}.kpi.main .v{color:#fff}
+
+/* Tabela */
+.table-wrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:12px 10px;border-bottom:2px solid var(--line2);color:var(--ink2);font-size:11px;text-transform:uppercase;background:#f8fbff;position:sticky;top:0;white-space:nowrap}
+th.num,td.num{text-align:center}
+td{padding:9px 10px;border-bottom:1px solid var(--line);color:var(--ink);vertical-align:top}
+tbody tr:hover{background:#f3faff}
+td.est{min-width:230px;max-width:300px;font-weight:700;font-size:12px}
+td.est .name{outline:none;border-radius:6px;padding:3px 5px;margin:-3px -5px;display:block}
+td.est .name:focus{background:#e0f2fe;box-shadow:0 0 0 2px var(--sky)}
+td.chipcell{min-width:170px}
+td.num .n{display:inline-block;min-width:38px;padding:5px 10px;border-radius:9999px;font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;background:#e0f2fe;color:var(--navy2)}
+td.num .n.eas{background:#dcfce7;color:#065f46}
+td.num .n.zero{background:#f1f5f9;color:#94a3b8}
+td.act{width:34px;text-align:center}
+.del{background:none;border:none;color:#cbd5e1;cursor:pointer;font-size:16px;padding:2px 6px;border-radius:6px}
+.del:hover{color:var(--red);background:#fdecf1}
+tfoot td{background:var(--navy2);color:#fff;font-weight:800;border:none;padding:11px 10px;font-size:12px}
+tfoot td.num{font-size:15px}
+tfoot input{width:70px;padding:4px 8px;border-radius:9999px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;font-weight:800;font-size:14px;text-align:center;outline:none}
+tfoot input::placeholder{color:rgba(255,255,255,.75)}
+tfoot input:focus{border-color:#fff;background:rgba(255,255,255,.22)}
+
+/* Post-its */
+.chipbox{display:flex;flex-wrap:wrap;gap:5px;align-items:flex-start;min-height:30px;padding:4px;border:1px dashed transparent;border-radius:8px;cursor:text;transition:.15s}
+.chipbox:hover,.chipbox:focus-within{border-color:var(--line2);background:#fbfdff}
+.chip{--c:#fef9c3;--b:#eab308;display:inline-flex;align-items:center;gap:3px;background:var(--c);border-left:3px solid var(--b);color:#1e293b;font-size:11.5px;font-weight:700;padding:3px 4px 3px 7px;border-radius:3px 6px 6px 3px;box-shadow:0 1px 2px rgba(0,0,0,.12);line-height:1.3;max-width:100%;word-break:break-word;}
+@keyframes pop{from{transform:scale(.8);opacity:0}to{transform:none;opacity:1}}
+.chip .t{cursor:default}
+.chip button{background:none;border:none;cursor:pointer;color:#64748b;font-size:12px;line-height:1;padding:1px 3px;border-radius:4px;opacity:.55}
+.chip button:hover{opacity:1;background:rgba(0,0,0,.08);color:var(--ink)}
+.chip.off{opacity:.55;text-decoration:line-through;filter:grayscale(1)}
+.k-esf{--c:#dbeafe;--b:#2563eb}.k-eap,.k-eapp{--c:#dcfce7;--b:#16a34a}.k-esb{--c:#ede9fe;--b:#7c3aed}
+.k-emulti{--c:#fef3c7;--b:#d97706}.k-ecr{--c:#fce7f3;--b:#db2777}.k-vinc{--c:#ccfbf1;--b:#0d9488}
+.chipbox input{border:none;outline:none;background:transparent;font-size:12px;min-width:60px;flex:1;padding:4px 2px;color:var(--ink)}
+.chipbox input::placeholder{color:#b6c2d1}
+.chip-edit{font:inherit;font-weight:700;border:none;background:#fff;outline:2px solid var(--sky);border-radius:3px;width:120px;padding:0 3px}
+
+.add-row{margin-top:12px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:11.5px;color:var(--muted);margin-top:12px;align-items:center}
+.obs{margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 18px}
+.obs h4{margin:0 0 8px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.obs .chipbox .chip{--c:#fff7d6;--b:#f59e0b;font-weight:600}
+.bloco{margin-bottom:26px}
+.bloco:last-child{margin-bottom:0}
+.bloco-title{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-size:13px;font-weight:800;color:var(--navy2);text-transform:uppercase;letter-spacing:.4px}
+.bloco-title:before{content:"";width:6px;height:18px;background:var(--sky);border-radius:3px}
+.hint{font-size:11px;color:var(--muted);margin-top:6px}
+.empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
+
+/* Rodapé */
+.footer{margin-top:40px;display:flex;justify-content:space-between;align-items:center;color:#fff;font-size:12px;width:100%;max-width:1100px;margin-left:auto;margin-right:auto}
+.footer-logo{max-height:50px;width:auto}
+.footer-center{text-align:center;display:flex;flex-direction:column;align-items:center}
+.footer-center img{max-height:40px;margin-bottom:8px}
+.footer-right{text-align:right;line-height:1.6}
+.footer-right img{max-height:40px;margin-bottom:10px}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:9999px;font-size:13px;font-weight:600;opacity:0;transition:.25s;pointer-events:none;z-index:99}
+.toast.on{opacity:1;transform:translateX(-50%)}
+
+@media (max-width:768px){
+  body{padding:10px 10px 40px}
+  .app-header{flex-direction:column;text-align:center;gap:15px;padding:20px 15px}
+  .app-logo{max-width:200px}
+  .app-title-group{border-left:none;border-top:1px solid rgba(255,255,255,.2);padding-left:0;padding-top:15px}
+  .app-title-group h1{font-size:22px}.app-title-group h2{font-size:12px}
+  .tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:0}
+  .container{border-radius:0 0 16px 16px}
+  .toolbar,.section{padding:14px}
+  .search{min-width:0;width:100%}
+  .footer{flex-direction:column;gap:30px}
+  .footer-left,.footer-center,.footer-right{text-align:center}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="app-header">
+    <img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo-did.png" alt="Diretoria de Inteligência de Dados" class="app-logo" onerror="this.style.display='none'">
+    <div class="app-title-group">
+      <h1>GESTOR MAPEADO</h1>
+      <h2>Secretaria Municipal de Saúde - SEMSA · Competência <span id="hComp"></span></h2>
+    </div>
+  </div>
+
+  <nav class="tabs" id="tabs"></nav>
+  <div class="container">
+    <div class="toolbar">
+      <label class="field">Competência <input id="comp" maxlength="6" inputmode="numeric"></label>
+      <input class="search" id="search" type="search" placeholder="Buscar estabelecimento, INE ou unidade…">
+      <span class="sep"></span>
+      <span class="status" id="status"></span>
+      <button class="btn btn-success" id="pdfAll">⬇ Exportar PDF (todas as abas)</button>
+      <button class="btn btn-ghost" id="pdfOne">PDF desta aba</button>
+      <button class="btn btn-ghost" id="xlsx">Excel</button>
+      <button class="btn btn-ghost" id="bkp" title="Baixa um arquivo .json com todos os dados">Backup</button>
+      <button class="btn btn-ghost" id="imp" title="Carrega um backup .json">Importar</button>
+      <button class="btn btn-danger-ghost" id="reset" title="Volta aos dados da planilha original">Restaurar</button>
+      <input type="file" id="impFile" accept=".json,application/json" hidden>
+    </div>
+    <div id="view"></div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer-left"><img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo_pmm_white.png" alt="Prefeitura de Manaus" class="footer-logo" onerror="this.style.display='none'"></div>
+  <div class="footer-center">
+    <img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo-did.png" alt="DID" onerror="this.style.display='none'">
+    <div>Diretoria de Inteligência de Dados</div>
+    <div>Gerência de Análise e Estatística</div>
+    <div>DID © 2026</div>
+  </div>
+  <div class="footer-right">
+    <img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo-semsa-cabecalho-white.png" alt="SEMSA" onerror="this.style.display='none'"><br>
+    Av. Maceió, 160 - Adrianópolis<br>Manaus - AM, 69029-520<br>Telefone: (92) 3214-5072
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= DADOS ORIGINAIS (planilha GESTOR MAPEADO 202611) ================= */
+const SEED = {"competencia":"202611","tabs":{"leste":{"rows":[{"nome":"CAPS AD II LESTE DRA ELIANA VITORINO SCHRAMM","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"vinc":[]}},{"nome":"CAPSI II LESTE DR. ROGELIO CASADO MARINHO FILHO","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"vinc":[]}},{"nome":"CEO LESTE PROFESSOR DR JAIR MACHADO SANTOS DA ROCHA","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"vinc":[]}},{"nome":"DISTRITO DE SAUDE LESTE","f":{"esf":[{"v":"106"},{"v":"113"},{"v":"134"},{"v":"147"}],"eap":[],"esb":[{"v":"147"}],"emulti":[],"vinc":[{"v":"L06"},{"v":"L13"},{"v":"L34"},{"v":"L47"}]}},{"nome":"LABORATORIO DISTRITAL LESTE","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"vinc":[]}},{"nome":"POLICLINICA DR ANTONIO COMTE TELLES","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"vinc":[]}},{"nome":"USF DESEMBARGADOR FABIO COUTO VALLE","f":{"esf":[{"v":"180"},{"v":"181"},{"v":"182"},{"v":"192"}],"eap":[],"esb":[{"v":"180"},{"v":"181"}],"emulti":[{"v":"FABIO COUTO 01"},{"v":"FABIO COUTO 03"}],"vinc":[]}},{"nome":"USF DR AGNALDO GOMES DA COSTA (PPP)","f":{"esf":[{"v":"107"},{"v":"114"},{"v":"115"},{"v":"145"},{"v":"194"},{"v":"195"},{"v":"197"}],"eap":[{"v":"1003"},{"v":"1033"}],"esb":[{"v":"107"},{"v":"1107"},{"v":"115"},{"v":"145"},{"v":"194"},{"v":"1194"},{"v":"1003"},{"v":"1033"}],"emulti":[],"vinc":[{"v":"L14"},{"v":"L15"},{"v":"L45"}]}},{"nome":"USF DR ALFREDO CAMPOS","f":{"esf":[{"v":"124"},{"v":"133"},{"v":"143"},{"v":"162"},{"v":"163"},{"v":"164"},{"v":"169"}],"eap":[{"v":"1011"},{"v":"1015"},{"v":"1030"},{"v":"1031"},{"v":"1032"}],"esb":[{"v":"143"},{"v":"162"},{"v":"163"},{"v":"1163"}],"emulti":[{"v":"ALFREDO CAMPOS 01"}],"vinc":[{"v":"L24"}]}},{"nome":"USF DR GILSON MOREIRA","f":{"esf":[{"v":"125"},{"v":"174"}],"eap":[],"esb":[{"v":"125"}],"emulti":[{"v":"GILSON MOREIRA 01"}],"vinc":[]}},{"nome":"USF DR JOSE AMAZONAS PALHANO","f":{"esf":[{"v":"123"},{"v":"167"},{"v":"168"},{"v":"179"},{"v":"183"}],"eap":[{"v":"1006"},{"v":"1012"},{"v":"1021"},{"v":"1022"},{"v":"1023"}],"esb":[{"v":"123"},{"v":"167"},{"v":"168"},{"v":"1006"}],"emulti":[{"v":"AMAZONAS PALHANO 01"}],"vinc":[]}},{"nome":"USF DR JOSE AVELINO PEREIRA","f":{"esf":[{"v":"101"},{"v":"102"},{"v":"176"},{"v":"187"},{"v":"190"}],"eap":[{"v":"1009"}],"esb":[{"v":"102"},{"v":"176"},{"v":"187"}],"emulti":[{"v":"JOSE AVELINO 01"}],"vinc":[{"v":"L01"}]}},{"nome":"USF DR PLATAO ARAUJO","f":{"esf":[{"v":"120"},{"v":"142"},{"v":"188"}],"eap":[],"esb":[{"v":"120"},{"v":"142"}],"emulti":[],"vinc":[{"v":"L42"}]}},{"nome":"USF DR SILAS DE OLIVEIRA SANTOS","f":{"esf":[{"v":"111"},{"v":"112"},{"v":"136"},{"v":"137"},{"v":"138"}],"eap":[],"esb":[{"v":"111"},{"v":"112"},{"v":"138"}],"emulti":[{"v":"SILAS SANTOS 01"}],"vinc":[{"v":"L36"},{"v":"L37"}]}},{"nome":"USF DR WALDIR BUGALHO DE MEDEIROS","f":{"esf":[{"v":"121"},{"v":"159"},{"v":"160"},{"v":"161"},{"v":"175"},{"v":"196"}],"eap":[],"esb":[{"v":"121"},{"v":"159"},{"v":"161"},{"v":"1161"}],"emulti":[],"vinc":[]}},{"nome":"USF DRA LUIZA DO CARMO RIBEIRO FERNANDES","f":{"esf":[{"v":"118"},{"v":"153"}],"eap":[{"v":"1008"},{"v":"1014"}],"esb":[{"v":"153"},{"v":"1008"},{"v":"1014"}],"emulti":[{"v":"LUIZA DO CARMO 01"}],"vinc":[{"v":"L18"}]}},{"nome":"USF ENFERMEIRA IVONE LIMA DOS SANTOS","f":{"esf":[{"v":"116"},{"v":"117"},{"v":"127"},{"v":"128"},{"v":"129"},{"v":"130"},{"v":"131"},{"v":"132"},{"v":"135"},{"v":"148"},{"v":"172"},{"v":"173"}],"eap":[{"v":"1013"},{"v":"1024"}],"esb":[{"v":"117"},{"v":"128"},{"v":"132"},{"v":"135"},{"v":"148"}],"emulti":[{"v":"IVONE LIMA 01"},{"v":"IVONE LIMA 02"}],"vinc":[{"v":"L16"},{"v":"L29"},{"v":"L30"},{"v":"L31"},{"v":"L32"}]}},{"nome":"USF ENFERMEIRA JOSEPHINA DE MELLO","f":{"esf":[{"v":"139"},{"v":"140"},{"v":"141"}],"eap":[],"esb":[{"v":"139"},{"v":"140"},{"v":"141"}],"emulti":[],"vinc":[]}},{"nome":"USF GEBES DE MELO MEDEIROS FILHO - REATIVADO COMP. 202504","f":{"esf":[{"v":"122"},{"v":"154"},{"v":"155"},{"v":"156"},{"v":"157"},{"v":"158"},{"v":"170"},{"v":"171"}],"eap":[{"v":"1025"}],"esb":[{"v":"122"},{"v":"155"},{"v":"156"}],"emulti":[{"v":"GEBE MEDEIROS 01"}],"vinc":[]}},{"nome":"USF GERALDO MAGELA","f":{"esf":[{"v":"109"},{"v":"110"},{"v":"186"}],"eap":[{"v":"1001"},{"v":"1002"},{"v":"1026"}],"esb":[{"v":"186"},{"v":"1001"},{"v":"1002"},{"v":"109"}],"emulti":[],"vinc":[{"v":"L09"},{"v":"L10"}]}},{"nome":"USF GUILHERME ALEXANDRE","f":{"esf":[{"v":"119"},{"v":"150"}],"eap":[{"v":"1007"}],"esb":[{"v":"1007"}],"emulti":[],"vinc":[{"v":"L19"}]}},{"nome":"USF JOAO NOGUEIRA DA MATTA","f":{"esf":[{"v":"108"},{"v":"146"},{"v":"191"}],"eap":[{"v":"1010"},{"v":"1016"}],"esb":[{"v":"146"},{"v":"1010"},{"v":"1016"}],"emulti":[],"vinc":[{"v":"L08"},{"v":"L46"}]}},{"nome":"USF LAGO DO ALEIXO","f":{"esf":[{"v":"151"}],"eap":[],"esb":[{"v":"151"}],"emulti":[],"vinc":[]}},{"nome":"USF MARIA LEONOR BRILHANTE","f":{"esf":[{"v":"103"},{"v":"104"},{"v":"105"},{"v":"149"},{"v":"165"},{"v":"166"}],"eap":[{"v":"1027"},{"v":"1028"},{"v":"1029"}],"esb":[{"v":"105"},{"v":"149"},{"v":"165"},{"v":"1165"},{"v":"1027"},{"v":"1028"}],"emulti":[{"v":"LEONOR BRILHANTE 01"},{"v":"LEONOR BRILHANTE 02"}],"vinc":[{"v":"L03"},{"v":"L04"},{"v":"L05"}]}},{"nome":"USF MAUAZINHO","f":{"esf":[{"v":"144"},{"v":"184"},{"v":"193"}],"eap":[{"v":"1004"},{"v":"1005"},{"v":"1019"}],"esb":[{"v":"144"},{"v":"1004"},{"v":"1005"}],"emulti":[{"v":"MAUAZINHO 01"}],"vinc":[{"v":"L44"}]}},{"nome":"USF NOVA ESPERANCA","f":{"esf":[{"v":"152"},{"v":"189"}],"eap":[],"esb":[{"v":"152"},{"v":"1152"}],"emulti":[],"vinc":[]}},{"nome":"USF SENADOR SEVERIANO NUNES","f":{"esf":[{"v":"126"},{"v":"177"},{"v":"178"},{"v":"185"}],"eap":[],"esb":[{"v":"126"}],"emulti":[{"v":"SEVERIANO NUNES 01"},{"v":"SEVERIANO NUNES 02"}],"vinc":[]}}],"obs":[]},"norte":{"rows":[{"nome":"CEO NORTE DR RUBIM SA","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"vinc":[]}},{"nome":"DISTRITO DE SAUDE NORTE","f":{"esf":[{"v":"239 (INE DESATIVADO NO CNES DESATIVADO)","off":true}],"eap":[],"esb":[{"v":"*239 (INE REATIVADO N CNES 2014750 USGF AUGIAS GADELHA ESB-296)","off":true}],"emulti":[],"vinc":[{"v":"N39 (DESATIVADO TEMP REFORMA)","off":true}]}},{"nome":"LABORATORIO DISTRITAL NORTE  PROFESSOR MANOEL BASTOS LIRA","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"vinc":[]}},{"nome":"POLICLINICA  DR JOSE ANTONIO DA SILVA","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"vinc":[]}},{"nome":"USF AUGIAS GADELHA - REATIVADO COMP. 202605","f":{"esf":[{"v":"213"},{"v":"216"},{"v":"217"},{"v":"220"},{"v":"238"},{"v":"274"},{"v":"275"},{"v":"295"},{"v":"296"}],"eap":[{"v":"2008"},{"v":"2009"},{"v":"2020"},{"v":"2026"},{"v":"2027"},{"v":"2028"}],"esb":[{"v":"213"},{"v":"216"},{"v":"217"},{"v":"220"},{"v":"274"},{"v":"296"},{"v":"2008"},{"v":"2009"},{"v":"2010"},{"v":"2020"},{"v":"2026"}],"emulti":[{"v":"AUGIAS GADELHA 01"},{"v":"AUGIAS GADELHA 02"}],"vinc":[{"v":"N13"},{"v":"N16"},{"v":"N17"},{"v":"N38"}]}},{"nome":"USF ARMANDO MENDES","f":{"esf":[{"v":"219"},{"v":"222"},{"v":"223"},{"v":"240"},{"v":"270"},{"v":"278"},{"v":"279"}],"eap":[{"v":"2001"},{"v":"2007"},{"v":"2030"}],"esb":[{"v":"219"},{"v":"222"},{"v":"223"},{"v":"240"},{"v":"270"},{"v":"2001"}],"emulti":[{"v":"ARMANDO MENDES 01"}],"vinc":[{"v":"N19"},{"v":"N22"},{"v":"N23"},{"v":"N40"}]}},{"nome":"USF ARTHUR VIRGILIO FILHO","f":{"esf":[{"v":"212"},{"v":"215"},{"v":"221"},{"v":"225"},{"v":"233"},{"v":"266"},{"v":"267"},{"v":"268"}],"eap":[{"v":"2002"},{"v":"2015"},{"v":"2023"},{"v":"2024"}],"esb":[{"v":"212"},{"v":"215"},{"v":"221"},{"v":"266"},{"v":"267"},{"v":"268"},{"v":"225"},{"v":"233"}],"emulti":[{"v":"ARTHUR VIRGILIO 01"}],"vinc":[{"v":"N12"},{"v":"N21"}]}},{"nome":"USF BALBINA MESTRINHO","f":{"esf":[{"v":"214"},{"v":"218"},{"v":"244"},{"v":"250"},{"v":"251"},{"v":"258"},{"v":"271"},{"v":"272"},{"v":"273"},{"v":"297"}],"eap":[{"v":"2011"},{"v":"2014"},{"v":"2016"},{"v":"2017"},{"v":"2018"}],"esb":[{"v":"214"},{"v":"244"},{"v":"2244"},{"v":"250"},{"v":"251"},{"v":"258"},{"v":"271"},{"v":"2271"},{"v":"273"},{"v":"2273"}],"emulti":[],"vinc":[{"v":"N14"},{"v":"N50"},{"v":"N51"},{"v":"N58"}]}},{"nome":"USF CARMEN NICOLAU","f":{"esf":[{"v":"228"},{"v":"248"},{"v":"260"},{"v":"283"},{"v":"284"},{"v":"285"},{"v":"286"},{"v":"287"}],"eap":[],"esb":[{"v":"248"}],"emulti":[{"v":"CARMEN NICOLAU 01"}],"vinc":[{"v":"N48"},{"v":"N60"}]}},{"nome":"USF DR JOSE FIGLIUOLO","f":{"esf":[{"v":"254"},{"v":"255"},{"v":"256"},{"v":"261"},{"v":"262"},{"v":"263"}],"eap":[],"esb":[{"v":"255"},{"v":"256"},{"v":"261"}],"emulti":[{"v":"DR JOSE FIGLIUOLO 01"}],"vinc":[{"v":"N54"},{"v":"N55"},{"v":"N56"}]}},{"nome":"USF ENFERMEIRA ANNA BARRETO PEREIRA","f":{"esf":[{"v":"201"},{"v":"203"},{"v":"235"},{"v":"236"},{"v":"245"},{"v":"2102"},{"v":"2103"},{"v":"2104"}],"eap":[{"v":"2033"}],"esb":[{"v":"201"},{"v":"203"},{"v":"245"},{"v":"2245"},{"v":"2102"},{"v":"22102"}],"emulti":[],"vinc":[{"v":"N01"},{"v":"N03"},{"v":"N35"},{"v":"N36"}]}},{"nome":"USF FATIMA ANDRADE","f":{"esf":[{"v":"207"},{"v":"208"},{"v":"210"},{"v":"211"},{"v":"237"},{"v":"265"}],"eap":[],"esb":[{"v":"207"},{"v":"210"},{"v":"265"}],"emulti":[],"vinc":[{"v":"N08"},{"v":"N11"},{"v":"N37"}]}},{"nome":"USF FREI VALERIO DI CARLO","f":{"esf":[{"v":"230"},{"v":"231"},{"v":"232"},{"v":"234"},{"v":"246"},{"v":"247"},{"v":"280"},{"v":"281"}],"eap":[{"v":"2004"},{"v":"2013"},{"v":"2022"}],"esb":[{"v":"230"},{"v":"231"},{"v":"232"},{"v":"234"},{"v":"280"},{"v":"2280"},{"v":"281"},{"v":"2281"},{"v":"2013"},{"v":"246"}],"emulti":[{"v":"FREI VALERIO 01"}],"vinc":[{"v":"N30"},{"v":"N31"},{"v":"N34"},{"v":"N46"},{"v":"N47"}]}},{"nome":"USF MJ PM SALVIO BELOTA","f":{"esf":[{"v":"229"},{"v":"249"},{"v":"257"},{"v":"259"},{"v":"276"},{"v":"277"},{"v":"298"},{"v":"299"},{"v":"2100"}],"eap":[{"v":"2003"},{"v":"2005"},{"v":"2006"},{"v":"2012"},{"v":"2019"},{"v":"2021"},{"v":"2029"},{"v":"2031"}],"esb":[{"v":"249"},{"v":"257"},{"v":"259"},{"v":"276"},{"v":"277"},{"v":"298"},{"v":"2298"},{"v":"299"},{"v":"2005"},{"v":"2019"},{"v":"2101"},{"v":"2276"},{"v":"2277"}],"emulti":[{"v":"SALVIO BELOTA 01"}],"vinc":[{"v":"N29"},{"v":"N49"},{"v":"N57"},{"v":"N59"}]}},{"nome":"USF PREFEITO AMAZONINO MENDES (PPP)","f":{"esf":[{"v":"204"},{"v":"264"},{"v":"288"},{"v":"289"}],"eap":[{"v":"2032"}],"esb":[{"v":"264"},{"v":"288"},{"v":"2288"},{"v":"289"}],"emulti":[],"vinc":[]}},{"nome":"USF PREFEITO FRANK ABRAHIM LIMA (PPP)","f":{"esf":[{"v":"209"},{"v":"2105"},{"v":"2106"},{"v":"2107"}],"eap":[{"v":"2010"}],"esb":[{"v":"209"},{"v":"2105"},{"v":"22105"},{"v":"2106"},{"v":"22106"}],"emulti":[],"vinc":[]}},{"nome":"USF PREFEITO MANOEL HENRIQUES RIBEIRO (PPP)","f":{"esf":[{"v":"202"},{"v":"205"},{"v":"206"},{"v":"242"},{"v":"243"},{"v":"2108"},{"v":"2109"},{"v":"2110"}],"eap":[],"esb":[{"v":"205"},{"v":"243"},{"v":"2108"},{"v":"22108"},{"v":"2109"}],"emulti":[],"vinc":[{"v":"N02"},{"v":"N06"},{"v":"N42"},{"v":"N43"}]}},{"nome":"USF PROFESSOR CARLSON GRACIE","f":{"esf":[{"v":"241"},{"v":"252"},{"v":"253"},{"v":"290"},{"v":"291"},{"v":"292"},{"v":"293"}],"eap":[{"v":"2025"}],"esb":[{"v":"241"},{"v":"252"},{"v":"253"},{"v":"291"},{"v":"292"},{"v":"2292"}],"emulti":[{"v":"CARLSON GRACIE 01"}],"vinc":[{"v":"N41"},{"v":"N52"},{"v":"N53"}]}},{"nome":"USF TEREZA DE JESUS FROTA (PPP)","f":{"esf":[{"v":"269"},{"v":"224"},{"v":"226"},{"v":"227"},{"v":"282"},{"v":"294"},{"v":"2101"}],"eap":[],"esb":[{"v":"282"},{"v":"269"},{"v":"224"},{"v":"226"},{"v":"227"}],"emulti":[],"vinc":[{"v":"N24"},{"v":"N26"},{"v":"N27"}]}}],"obs":[]},"oeste":{"rows":[{"nome":"CEO OESTE PROF JOAO LUIS RIBEIRO MENDONCA","f":{"esf":[],"eap":[],"esb":[],"vinc":[],"emulti":[]}},{"nome":"DISTRITO DE SAUDE OESTE","f":{"esf":[],"eap":[],"esb":[],"vinc":[],"emulti":[]}},{"nome":"LABORATORIO DISTRITAL OESTE","f":{"esf":[],"eap":[],"esb":[],"vinc":[],"emulti":[]}},{"nome":"LABORATORIO DE CITOLOGIA PROF SEBASTIAO FERREIRA MARINHO - DESCNES","f":{"esf":[],"eap":[],"esb":[],"vinc":[],"emulti":[]}},{"nome":"POLICLINICA DR DJALMA BATISTA","f":{"esf":[],"eap":[],"esb":[{"v":"323"},{"v":"3323"}],"vinc":[],"emulti":[]}},{"nome":"USF ADALGIZA BARBOSA DE LIMA","f":{"esf":[{"v":"312"},{"v":"313"},{"v":"376"},{"v":"377"}],"eap":[{"v":"3016"},{"v":"3017"},{"v":"3033"}],"esb":[{"v":"312"},{"v":"3312"}],"vinc":[],"emulti":[{"v":"ADALGIZA BARBOSA 01"}]}},{"nome":"USF LINDALVA DAMASCENO - REATIVADO COMP. 202410","f":{"esf":[{"v":"369"},{"v":"370"},{"v":"371"}],"eap":[{"v":"3004"},{"v":"3010"},{"v":"3029"}],"esb":[{"v":"369"},{"v":"3369"},{"v":"370"},{"v":"3004"}],"vinc":[{"v":"O45"},{"v":"O46"},{"v":"O48"},{"v":"O53"}],"emulti":[]}},{"nome":"USF MARIA IDA MENTONI","f":{"esf":[{"v":"364"}],"eap":[{"v":"3007"},{"v":"3011"},{"v":"3012"}],"esb":[],"vinc":[{"v":"O26"}],"emulti":[{"v":"IDA MENTONI 01"}]}},{"nome":"USF AJURICABA","f":{"esf":[{"v":"354"}],"eap":[{"v":"3014"},{"v":"3015"},{"v":"3036"}],"esb":[],"vinc":[{"v":"O03"}],"emulti":[]}},{"nome":"USF BAIRRO DA PAZ","f":{"esf":[{"v":"302"}],"eap":[{"v":"3008"},{"v":"3037"}],"esb":[],"vinc":[],"emulti":[{"v":"BAIRRO DA PAZ 01"}]}},{"nome":"USF DR JOSE RAIMUNDO FRANCO DE SA","f":{"esf":[{"v":"308"},{"v":"309"},{"v":"355"},{"v":"361"}],"eap":[{"v":"3024"},{"v":"3025"}],"esb":[{"v":"308"},{"v":"3308"},{"v":"309"},{"v":"3309"},{"v":"355"},{"v":"3355"}],"vinc":[{"v":"O10"},{"v":"O11"}],"emulti":[]}},{"nome":"USF DEODATO DE MIRANDA LEAO","f":{"esf":[{"v":"347"},{"v":"351"},{"v":"352"},{"v":"357"}],"eap":[{"v":"3019"},{"v":"3020"},{"v":"3027"},{"v":"3034"},{"v":"3035"},{"v":"3038"}],"esb":[],"vinc":[],"emulti":[{"v":"DEODATO LEAO 01"}]}},{"nome":"USF DOM MILTON CORREA","f":{"esf":[{"v":"314"},{"v":"315"},{"v":"342"}],"eap":[{"v":"3026"}],"esb":[],"vinc":[{"v":"O-18"}],"emulti":[]}},{"nome":"USF DR RAYOL DOS SANTOS","f":{"esf":[{"v":"326"},{"v":"328"}],"eap":[{"v":"3003"},{"v":"3009"}],"esb":[],"vinc":[{"v":"O25"}],"emulti":[]}},{"nome":"USF LEONOR DE FREITAS","f":{"esf":[{"v":"320"},{"v":"321"},{"v":"341"},{"v":"349"},{"v":"356"}],"eap":[{"v":"3005"},{"v":"3006"},{"v":"3031"}],"esb":[],"vinc":[],"emulti":[]}},{"nome":"USF LUIZ MONTENEGRO DESATIVADO MOTIVO 10 202602","f":{"esf":[],"eap":[],"esb":[],"vinc":[],"emulti":[]}},{"nome":"USF MANSOUR BULBOL","f":{"esf":[{"v":"336"},{"v":"350"},{"v":"358"},{"v":"359"}],"eap":[],"esb":[],"vinc":[{"v":"O07"},{"v":"O37"},{"v":"O38"}],"emulti":[{"v":"MANSOUR BULBOL 01"}]}},{"nome":"USF PARQUE DAS TRIBOS","f":{"esf":[{"v":"365"},{"v":"366"},{"v":"367"},{"v":"368"}],"eap":[{"v":"3004"},{"v":"3010"},{"v":"3029"}],"esb":[{"v":"365"}],"vinc":[{"v":"O01"},{"v":"O48"},{"v":"O53"}],"emulti":[]}},{"nome":"USF REDENCAO","f":{"esf":[{"v":"304"},{"v":"305"},{"v":"360"}],"eap":[{"v":"3002"},{"v":"3018"}],"esb":[],"vinc":[],"emulti":[{"v":"REDENCAO 01"}]}},{"nome":"USF SANTO ANTONIO","f":{"esf":[{"v":"329"},{"v":"331"},{"v":"362"}],"eap":[{"v":"3001"},{"v":"3013"}],"esb":[],"vinc":[{"v":"O30"}],"emulti":[{"v":"SANTO ANTONIO 01"},{"v":"SANTO ANTONIO 02"}]}},{"nome":"USF SANTOS DUMONT","f":{"esf":[{"v":"306"},{"v":"363"}],"eap":[{"v":"3021"},{"v":"3022"},{"v":"3023"}],"esb":[],"vinc":[],"emulti":[{"v":"SANTOS DUMONT 01"}]}},{"nome":"USF SAO VICENTE DE PAULO","f":{"esf":[{"v":"332"},{"v":"335"}],"eap":[],"esb":[],"vinc":[],"emulti":[]}},{"nome":"USF SILVIO SANTOS","f":{"esf":[{"v":"316"},{"v":"317"},{"v":"323"},{"v":"340"}],"eap":[],"esb":[{"v":"323"},{"v":"3323"},{"v":"316"},{"v":"3316"}],"vinc":[{"v":"O19"},{"v":"O22"},{"v":"043"}],"emulti":[]}},{"nome":"USF VILA DA PRATA","f":{"esf":[{"v":"324"},{"v":"327"},{"v":"339"},{"v":"344"}],"eap":[],"esb":[],"vinc":[],"emulti":[]}}],"obs":[]},"sul":{"rows":[{"nome":"CAPS AD III SUL  DR. AFRANIO SOARES","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"ecr":[],"vinc":[]}},{"nome":"CAPS III SUL  BENJAMIM MATIAS FERNANDES","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"ecr":[],"vinc":[]}},{"nome":"CAPSI II SUL PSICOLOGA NIVYA KELLEN DE CASTRO VALENTE","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"ecr":[],"vinc":[]}},{"nome":"CEO SUL DR JOSE FORTUNATO DE OLIVEIRA","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"ecr":[],"vinc":[]}},{"nome":"CER II PROFESSOR ROLLS GRACIE-FISICO E INTELECTUAL","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"ecr":[],"vinc":[]}},{"nome":"DISTRITO DE SAUDE SUL","f":{"esf":[{"v":"429"},{"v":"442"},{"v":"443"}],"eap":[],"esb":[{"v":"443"}],"emulti":[],"ecr":[],"vinc":[{"v":"THEODOMIRO GARRIDO"},{"v":"JAPIIM"},{"v":"S29"},{"v":"S42"},{"v":"S43"}]}},{"nome":"LABORATORIO DISTRITAL SUL","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"ecr":[],"vinc":[]}},{"nome":"LABORATORIO DE VIGILANCIA DR EDIVAR DOS SANTOS FERNANDES","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"ecr":[],"vinc":[]}},{"nome":"POLICLINICA CASTELO BRANCO","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"ecr":[],"vinc":[]}},{"nome":"USF ALMIR PEDREIRA","f":{"esf":[{"v":"408"},{"v":"467"}],"eap":[{"v":"4015"},{"v":"4016"}],"esb":[{"v":"408"},{"v":"467"},{"v":"4015"},{"v":"4016"}],"emulti":[{"v":"ALMIR PEDREIRA 01"}],"ecr":[],"vinc":[{"v":"USF S-08"}]}},{"nome":"USF BENEDITO BATISTA DE ALMEIDA (PPP)","f":{"esf":[{"v":"415"},{"v":"431"},{"v":"466"},{"v":"463"}],"eap":[{"v":"4036"},{"v":"4007"},{"v":"4021"},{"v":"4029"}],"esb":[{"v":"415"},{"v":"431"},{"v":"463"},{"v":"4431"},{"v":"4007"}],"emulti":[{"v":"BENEDITO ALMEIDA 01"},{"v":"BENEDITO ALMEIDA 02"}],"ecr":[],"vinc":[]}},{"nome":"USF DR ANTONIO REIS","f":{"esf":[{"v":"418"},{"v":"419"},{"v":"420"},{"v":"469"}],"eap":[],"esb":[{"v":"418"}],"emulti":[],"ecr":[],"vinc":[]}},{"nome":"USF DR ILIDIO ALMEIDA LIMA","f":{"esf":[{"v":"428"},{"v":"450"},{"v":"451"}],"eap":[],"esb":[{"v":"428"},{"v":"450"},{"v":"451"}],"emulti":[],"ecr":[],"vinc":[]}},{"nome":"USF DR JOSE RAYOL DOS SANTOS","f":{"esf":[{"v":"404"},{"v":"405"},{"v":"406"},{"v":"407"},{"v":"447"},{"v":"457"},{"v":"458"},{"v":"459"}],"eap":[{"v":"4009"},{"v":"4010"},{"v":"4011"},{"v":"4012"}],"esb":[{"v":"404"},{"v":"405"},{"v":"447"},{"v":"4009"},{"v":"4447"}],"emulti":[{"v":"DR JOSE RAYOL 01"},{"v":"DR JOSE RAYOL 02"}],"ecr":[],"vinc":[{"v":"S04"},{"v":"S05"},{"v":"S06"},{"v":"S07"}]}},{"nome":"USF DR LUIZ MONTENEGRO","f":{"esf":[{"v":"409"},{"v":"441"},{"v":"465"},{"v":"472"}],"eap":[{"v":"4024"},{"v":"4025"}],"esb":[{"v":"409"},{"v":"441"},{"v":"4024"},{"v":"4025"}],"emulti":[{"v":"DR LUIZ MONTENEGRO 01"},{"v":"SEDE 01"}],"ecr":[],"vinc":[]}},{"nome":"USF FRANK ROSEMBERG CALDERON","f":{"esf":[{"v":"424"},{"v":"425"}],"eap":[{"v":"4013"},{"v":"4014"},{"v":"4040"},{"v":"4041"}],"esb":[{"v":"424"},{"v":"425"},{"v":"4013"},{"v":"4014"}],"emulti":[{"v":"FRANK CALDERON 01"}],"ecr":[],"vinc":[]}},{"nome":"USF JAPIIM DESATIVADO TEMP POR REFORMA COMP 202607","f":{"esf":[],"eap":[],"esb":[{"v":"438"},{"v":"4438"},{"v":"4001"},{"v":"4038"}],"emulti":[{"v":"JAPIIM 02"}],"ecr":[],"vinc":[]}},{"nome":"USF LOURENCO BORGHI","f":{"esf":[{"v":"433"},{"v":"438"},{"v":"470"},{"v":"473"}],"eap":[{"v":"4006"},{"v":"4017"},{"v":"4019"}],"esb":[{"v":"433"},{"v":"470"},{"v":"473"},{"v":"4473"}],"emulti":[],"ecr":[],"vinc":[{"v":"S33"}]}},{"nome":"USF LUCIO FLAVIO VASCONCELOS DIAS","f":{"esf":[{"v":"421"},{"v":"427"},{"v":"416"},{"v":"434"}],"eap":[{"v":"4003"},{"v":"4026"}],"esb":[{"v":"421"},{"v":"4003"},{"v":"4026"},{"v":"416"}],"emulti":[{"v":"LUCIO FLAVIO 01"}],"ecr":[],"vinc":[{"v":"S21"},{"v":"S27"}]}},{"nome":"USF MEGUMO KADO","f":{"esf":[{"v":"410"},{"v":"411"},{"v":"412"},{"v":"414"},{"v":"468"}],"eap":[{"v":"4004"},{"v":"4035"}],"esb":[{"v":"410"},{"v":"412"},{"v":"4004"},{"v":"4035"}],"emulti":[{"v":"MEGUMO KADO 01"}],"ecr":[],"vinc":[{"v":"S11"},{"v":"S12"},{"v":"S14"}]}},{"nome":"USF NILTON LINS","f":{"esf":[{"v":"403"},{"v":"454"},{"v":"455"},{"v":"456"},{"v":"462"}],"eap":[{"v":"4037"}],"esb":[],"emulti":[{"v":"NILTON LINS 01"}],"ecr":[],"vinc":[]}},{"nome":"USF PETROPOLIS","f":{"esf":[{"v":"435"},{"v":"436"},{"v":"437"},{"v":"440"},{"v":"445"},{"v":"461"}],"eap":[{"v":"4002"},{"v":"4038"}],"esb":[{"v":"436"},{"v":"4436"},{"v":"445"},{"v":"4445"}],"emulti":[{"v":"PETROPOLIS 01"}],"ecr":[],"vinc":[{"v":"S35"},{"v":"S37"},{"v":"S40"}]}},{"nome":"USF ROSA PEREIRA DE ALMEIDA","f":{"esf":[{"v":"422"},{"v":"423"},{"v":"426"},{"v":"460"}],"eap":[{"v":"4027"},{"v":"4028"}],"esb":[{"v":"422"},{"v":"423"},{"v":"4423"},{"v":"426"},{"v":"4426"},{"v":"460"},{"v":"4460"},{"v":"4027"},{"v":"4028"}],"emulti":[],"ecr":[{"v":"ECR01"},{"v":"ECR02"}],"vinc":[]}},{"nome":"USF SANTA LUZIA","f":{"esf":[{"v":"413"},{"v":"417"},{"v":"471"}],"eap":[{"v":"4001"},{"v":"4005"}],"esb":[{"v":"417"}],"emulti":[],"ecr":[],"vinc":[{"v":"S13"}]}},{"nome":"USF SAO FRANCISCO","f":{"esf":[{"v":"439"},{"v":"444"},{"v":"446"},{"v":"448"},{"v":"449"},{"v":"464"}],"eap":[{"v":"4031"}],"esb":[{"v":"402"},{"v":"432"},{"v":"439"},{"v":"4439"},{"v":"448"},{"v":"464"},{"v":"4464"}],"emulti":[{"v":"SAO FRANCISCO 01"},{"v":"SAO FRANCISCO 02"}],"ecr":[],"vinc":[{"v":"S44"},{"v":"S46"},{"v":"S49"}]}},{"nome":"USF THEODOMIRO GARRIDO - DESATIVADO TEMP. REFORMA","f":{"esf":[],"eap":[],"esb":[],"emulti":[],"ecr":[],"vinc":[]}},{"nome":"USF THEOMARIO PINTO DA COSTA","f":{"esf":[{"v":"401"},{"v":"402"},{"v":"452"},{"v":"453"}],"eap":[{"v":"4008"},{"v":"4020"},{"v":"4030"}],"esb":[{"v":"401"},{"v":"452"},{"v":"4008"},{"v":"4020"},{"v":"4030"}],"emulti":[{"v":"THEOMARIO PINTO 01"}],"ecr":[],"vinc":[{"v":"S01"},{"v":"S02"},{"v":"S53"}]}},{"nome":"USF VICENTE PALLOTTI","f":{"esf":[{"v":"430"},{"v":"432"}],"eap":[{"v":"4022"},{"v":"4023"},{"v":"4039"}],"esb":[{"v":"430"},{"v":"4430"}],"emulti":[{"v":"VICENTE PALLOTTI 01"}],"ecr":[],"vinc":[{"v":"S32"}]}}],"obs":[]},"prisionais":{"rows":[{"nome":"CDF","f":{"esf":[],"eapp":[{"v":"EAPP CDF"}],"esb":[]}},{"nome":"UBS UPP","f":{"esf":[],"eapp":[{"v":"EAPP UPP"}],"esb":[]}},{"nome":"CDPM I","f":{"esf":[],"eapp":[{"v":"EAPP CDPM I"}],"esb":[]}},{"nome":"CDPM II","f":{"esf":[],"eapp":[{"v":"EAPP CDPM II"}],"esb":[]}},{"nome":"COMPAJ","f":{"esf":[],"eapp":[{"v":"EAPP COMPAJ"}],"esb":[]}},{"nome":"IPAT","f":{"esf":[],"eapp":[{"v":"EAPP IPAT"}],"esb":[]}}],"obs":["Todas as unidades prisionais: SCNES DESCENTRALIZADO.","Cada unidade possui 1 EAPP — substitua o rótulo pelo INE quando disponível."]},"centr":{"blocos":[{"titulo":"DISTRITO DE SAÚDE OESTE — BASE CENTRALIZADA","cols":["esf","eap","esb","emulti"],"rows":[{"nome":"DISTRITO DE SAUDE OESTE - BASE CENTRALIZADA","f":{"esf":[{"v":"13202508"},{"v":"2521474"},{"v":"2521490"},{"v":"2521504"},{"v":"2521512"}],"eap":[{"v":"13090505"}],"esb":[{"v":"16181707"},{"v":"2520907"},{"v":"2520923"},{"v":"2520931"},{"v":"2520966"},{"v":"2521520"}],"emulti":[]}},{"nome":"LABORATORIO DE CITOLOGIA PROF SEBASTIAO FERREIRA MARINHO","f":{"esf":[],"eap":[],"esb":[],"emulti":[]}}],"ovr":{"emulti":9,"eq":191,"eas":40},"obs":["INE: 0001471546 - NASF JOSEPHINA DE MELLO DESATIVADA TEMPORARIA NA BASE SCNES DESDE 21/10/2021","DISTRITO DE SAÚDE OESTE BASE LOCAL SCNES CENTRALIZADO GEIND-O","HÁ INES DESATIVADOS EM CNES DESATIVADOS","SOMENTE 01 EAS DESCENTRALIZADO - LABORAT. DE CITOLOGIA PROF SEBASTIAO FERREIRA MARINHO"]},{"titulo":"DISTRITO DE SAÚDE RURAL — BASE CENTRALIZADA","cols":["esf","eap","esb","emulti"],"rows":[{"nome":"DEPARTAMENTO DO DISTRITO DE SAUDE RURAL","f":{"esf":[{"v":"527"},{"v":"529"},{"v":"534"},{"v":"535"},{"v":"536"},{"v":"537"},{"v":"538"},{"v":"539"},{"v":"541"},{"v":"542"},{"v":"543"},{"v":"544"},{"v":"545"},{"v":"546"},{"v":"547"}],"eap":[{"v":"5001"},{"v":"5002"},{"v":"5003"},{"v":"5005"},{"v":"5006"},{"v":"5007"}],"esb":[{"v":"527"},{"v":"529"},{"v":"535"},{"v":"536"},{"v":"538"},{"v":"539"},{"v":"541"},{"v":"542"},{"v":"545"},{"v":"5001"},{"v":"5005"},{"v":"5006"}],"emulti":[{"v":"RURAL 01"},{"v":"RURAL 02"}]}}],"ovr":{"eas":21},"obs":["DISTRITO DE SAÚDE RURAL SCNES NÃO DESCENTRALIZADO.","Base local SCNES centralizado GEIND-R."]}]},"mmt":{"blocos":[{"titulo":"MMT — MATERNIDADE DR MOURA TAPAJOZ","cols":["esf","eap","esb"],"rows":[{"nome":"MATERNIDADE DR MOURA TAPAJOZ","f":{"esf":[],"eap":[],"esb":[]}}],"ovr":{"eas":1},"obs":["MMT SCNES NÃO DESCENTRALIZADO."]}]},"samu":{"blocos":[{"titulo":"SAMU","cols":["esf","eap","esb"],"rows":[{"nome":"SAMU","f":{"esf":[],"eap":[],"esb":[]}}],"ovr":{"eas":65},"obs":["SAMU SCNES NÃO DESCENTRALIZADO."]}]}}};
+
+/* ================= CONFIGURAÇÃO ================= */
+const COLS = {
+  esf:{l:'ESF'}, eap:{l:'EAP'}, eapp:{l:'EAPP'}, esb:{l:'ESB'},
+  emulti:{l:'eMulti'}, ecr:{l:'eCR'}, vinc:{l:'Unidades Vinculadas'}
+};
+const TABS = [
+  {id:'leste',     nome:'DISA LESTE',  titulo:'Gestor Mapeado Leste',  tipo:'mapa', cols:['esf','eap','esb','emulti','vinc']},
+  {id:'norte',     nome:'DISA NORTE',  titulo:'Gestor Mapeado Norte',  tipo:'mapa', cols:['esf','eap','esb','emulti','vinc']},
+  {id:'oeste',     nome:'DISA OESTE',  titulo:'Gestor Mapeado Oeste',  tipo:'mapa', cols:['esf','eap','esb','emulti','vinc']},
+  {id:'sul',       nome:'DISA SUL',    titulo:'Gestor Mapeado Sul',    tipo:'mapa', cols:['esf','eap','esb','emulti','ecr','vinc']},
+  {id:'centr',     nome:'DISA OESTE / RURAL CENTR', titulo:'Bases Centralizadas — Oeste e Rural', tipo:'blocos'},
+  {id:'prisionais',nome:'PRISIONAIS',  titulo:'Unidades Prisionais',   tipo:'mapa', cols:['esf','eapp','esb']},
+  {id:'mmt',       nome:'MMT',         titulo:'MMT',                   tipo:'blocos'},
+  {id:'samu',      nome:'SAMU',        titulo:'SAMU',                  tipo:'blocos'},
+];
+const KEY = 'gestorMapeado.v1';
+const teamCols = cols => cols.filter(c => c !== 'vinc');
+
+/* ================= ESTADO ================= */
+let state, current, query = '';
+const uid = () => Math.random().toString(36).slice(2, 10);
+function hydrate(d){
+  const s = JSON.parse(JSON.stringify(d));
+  const fix = r => { r.id = r.id || uid(); return r; };
+  for (const t of Object.values(s.tabs)){
+    (t.rows||[]).forEach(fix);
+    (t.blocos||[]).forEach(b => { b.id = b.id||uid(); b.rows.forEach(fix); b.ovr = b.ovr||{}; b.obs = b.obs||[]; });
+    t.obs = (t.obs || []).map(o => typeof o==='string' ? {v:o} : o);
+    (t.blocos||[]).forEach(b => b.obs = b.obs.map(o => typeof o==='string' ? {v:o} : o));
+  }
+  return s;
+}
+function load(){
+  try { const raw = localStorage.getItem(KEY); if (raw) return hydrate(JSON.parse(raw)); } catch(e){}
+  return hydrate(SEED);
+}
+let saveTimer;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+      $('#status').textContent = 'Salvo às ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    } catch(e){ $('#status').textContent = 'Não foi possível salvar no navegador — use Backup'; }
+  }, 250);
+}
+
+/* ================= UTIL ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const count = arr => (arr||[]).filter(c => !c.off).length;
+const rowTeams = (r, cols) => teamCols(cols).reduce((a,k) => a + count(r.f[k]), 0);
+const rowEas = r => 1 + count(r.f.vinc);
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2200); }
+function rowMatches(r){
+  if (!query) return true;
+  const q = query.toLowerCase();
+  return r.nome.toLowerCase().includes(q) || Object.values(r.f).some(a => a.some(c => c.v.toLowerCase().includes(q)));
+}
+function blocoTotals(b){
+  const t = {};
+  b.cols.forEach(k => t[k] = b.ovr[k] ?? b.rows.reduce((a,r)=>a+count(r.f[k]),0));
+  const autoEq = b.cols.reduce((a,k)=>a+t[k],0);
+  t.eq = b.ovr.eq ?? autoEq; t._autoEq = autoEq;
+  t._autoEas = b.rows.length;
+  t.eas = b.ovr.eas ?? t._autoEas;
+  return t;
+}
+function tabTotals(tab){
+  const d = state.tabs[tab.id], res = {est:0, eq:0, eas:0, por:{}};
+  if (tab.tipo === 'mapa'){
+    tab.cols.forEach(k => res.por[k] = 0);
+    d.rows.forEach(r => { res.est++; tab.cols.forEach(k => res.por[k] += count(r.f[k])); res.eq += rowTeams(r, tab.cols); res.eas += rowEas(r); });
+  } else {
+    d.blocos.forEach(b => { const t = blocoTotals(b); res.est += b.rows.length; res.eq += t.eq; res.eas += t.eas;
+      b.cols.forEach(k => res.por[k] = (res.por[k]||0) + t[k]); });
+  }
+  return res;
+}
+
+/* ================= RENDER ================= */
+function renderTabs(){
+  $('#tabs').innerHTML = TABS.map(t => `<button class="tab${t.id===current?' active':''}" data-tab="${t.id}">${t.nome}</button>`).join('');
+}
+function chipHTML(c, k, i){
+  return `<span class="chip k-${k}${c.off?' off':''}" data-i="${i}" title="${c.off?'Desativado — não entra na contagem. ':''}Duplo clique para editar">`+
+    `<span class="t">${esc(c.v)}</span>`+
+    `<button data-act="toggle" title="${c.off?'Reativar':'Marcar como desativado (não conta)'}">${c.off?'↺':'⊘'}</button>`+
+    `<button data-act="rm" title="Remover">×</button></span>`;
+}
+function chipBox(arr, k, path, ph){
+  return `<div class="chipbox" data-path="${path}" data-k="${k}">${(arr||[]).map((c,i)=>chipHTML(c,k,i)).join('')}`+
+    `<input placeholder="${ph||'+ Enter'}" aria-label="Adicionar ${COLS[k]?COLS[k].l:'item'}"></div>`;
+}
+function kpis(tab){
+  const t = tabTotals(tab);
+  const cols = tab.tipo==='mapa' ? tab.cols : Object.keys(t.por);
+  return `<div class="kpis">
+    <div class="kpi main"><div class="l">Qtde. Equipes</div><div class="v">${t.eq}</div></div>
+    <div class="kpi main"><div class="l">Qtde. EAS</div><div class="v">${t.eas}</div></div>
+    <div class="kpi"><div class="l">Estabelecimentos</div><div class="v">${t.est}</div></div>
+    ${cols.map(k=>`<div class="kpi"><div class="l">${COLS[k].l}</div><div class="v">${t.por[k]}</div></div>`).join('')}
+  </div>`;
+}
+function numCell(v, cls){ return `<td class="num"><span class="n ${cls||''}${v===0?' zero':''}">${v}</span></td>`; }
+
+function renderMapa(tab){
+  const d = state.tabs[tab.id], cols = tab.cols, tc = teamCols(cols);
+  const rows = d.rows.map((r,i)=>[r,i]).filter(([r])=>rowMatches(r));
+  const tot = tabTotals(tab);
+  return `<div class="section">
+    <div class="section-head"><div><h3>${esc(tab.titulo)} — Competência ${esc(state.competencia)}</h3>
+      <div class="sub">Qtde. Equipes = ${tc.map(k=>COLS[k].l).join(' + ')} · Qtde. EAS = Estabelecimento${cols.includes('vinc')?' + Unidades Vinculadas':''}</div></div></div>
+    ${kpis(tab)}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Estabelecimento</th>${cols.map(k=>`<th>${COLS[k].l}</th>`).join('')}<th class="num">Qtde. Equipes</th><th class="num">Qtde. EAS</th><th></th></tr></thead>
+      <tbody>${rows.length ? rows.map(([r,i]) => `<tr data-row="${i}">
+        <td class="est"><span class="name" contenteditable="true" spellcheck="false" data-path="${tab.id}.rows.${i}">${esc(r.nome)}</span></td>
+        ${cols.map(k=>`<td class="chipcell">${chipBox(r.f[k], k, `${tab.id}.rows.${i}`)}</td>`).join('')}
+        ${numCell(rowTeams(r,cols))}${numCell(rowEas(r),'eas')}
+        <td class="act"><button class="del" data-del="${tab.id}.rows.${i}" title="Excluir estabelecimento">🗑</button></td></tr>`).join('')
+        : `<tr><td colspan="${cols.length+4}" class="empty">Nenhum estabelecimento encontrado.</td></tr>`}</tbody>
+      <tfoot><tr><td>TOTAL — ${tot.est} estabelecimento(s)</td>${cols.map(k=>`<td class="num">${tot.por[k]}</td>`).join('')}<td class="num">${tot.eq}</td><td class="num">${tot.eas}</td><td></td></tr></tfoot>
+    </table></div>
+    <button class="btn btn-ghost add-row" data-add="${tab.id}">+ Adicionar estabelecimento</button>
+    ${legend(cols)}
+    <div class="obs"><h4>Observações</h4>${chipBox(d.obs,'obs',`${tab.id}.obs`,'Digite uma observação e tecle Enter')}</div>
+  </div>`;
+}
+function renderBlocos(tab){
+  const d = state.tabs[tab.id];
+  return `<div class="section">
+    <div class="section-head"><div><h3>${esc(tab.titulo)} — Competência ${esc(state.competencia)}</h3>
+      <div class="sub">Bases SCNES centralizadas: os totais podem ser informados manualmente (campo vazio = soma automática)</div></div></div>
+    ${kpis(tab)}
+    ${d.blocos.map((b,bi)=>{
+      const t = blocoTotals(b), p = `${tab.id}.blocos.${bi}`;
+      const rows = b.rows.map((r,i)=>[r,i]).filter(([r])=>rowMatches(r));
+      return `<div class="bloco">
+      <div class="bloco-title">${esc(b.titulo)}</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Estabelecimento</th>${b.cols.map(k=>`<th>${COLS[k].l}</th>`).join('')}<th class="num">Qtde. Equipes</th><th></th></tr></thead>
+        <tbody>${rows.map(([r,i])=>`<tr>
+          <td class="est"><span class="name" contenteditable="true" spellcheck="false" data-path="${p}.rows.${i}">${esc(r.nome)}</span></td>
+          ${b.cols.map(k=>`<td class="chipcell">${chipBox(r.f[k],k,`${p}.rows.${i}`)}</td>`).join('')}
+          ${numCell(rowTeams(r,b.cols))}
+          <td class="act"><button class="del" data-del="${p}.rows.${i}" title="Excluir">🗑</button></td></tr>`).join('') || `<tr><td colspan="${b.cols.length+3}" class="empty">Nenhum resultado.</td></tr>`}</tbody>
+        <tfoot>
+          <tr><td>TOTAL EQUIPES</td>${b.cols.map(k=>`<td class="num"><input data-ovr="${p}" data-k="${k}" value="${b.ovr[k]??''}" placeholder="${b.rows.reduce((a,r)=>a+count(r.f[k]),0)}" inputmode="numeric"></td>`).join('')}
+            <td class="num"><input data-ovr="${p}" data-k="eq" value="${b.ovr.eq??''}" placeholder="${t._autoEq}" inputmode="numeric"></td><td></td></tr>
+          <tr><td>TOTAL EAS</td><td class="num"><input data-ovr="${p}" data-k="eas" value="${b.ovr.eas??''}" placeholder="${t._autoEas}" inputmode="numeric"></td><td colspan="${b.cols.length+1}"></td></tr>
+        </tfoot>
+      </table></div>
+      <button class="btn btn-ghost add-row" data-addb="${p}">+ Adicionar estabelecimento</button>
+      <div class="obs"><h4>Observações</h4>${chipBox(b.obs,'obs',`${p}.obs`,'Digite uma observação e tecle Enter')}</div>
+    </div>`;}).join('')}
+    ${legend(['esf','eap','esb','emulti'])}
+  </div>`;
+}
+function legend(cols){
+  return `<div class="legend"><span>Digite e tecle <b>Enter</b> (ou vírgula) para criar um post-it · duplo clique edita · <b>⊘</b> desativa sem apagar (não conta) · <b>×</b> remove</span>
+    ${cols.map(k=>`<span class="chip k-${k}"><span class="t">${COLS[k].l}</span></span>`).join('')}</div>`;
+}
+function render(keepFocus){
+  const tab = TABS.find(t=>t.id===current);
+  $('#hComp').textContent = state.competencia;
+  $('#comp').value = state.competencia;
+  renderTabs();
+  $('#view').innerHTML = tab.tipo==='mapa' ? renderMapa(tab) : renderBlocos(tab);
+  if (keepFocus){
+    const box = document.querySelector(`.chipbox[data-path="${keepFocus.path}"][data-k="${keepFocus.k}"] input`);
+    if (box) box.focus();
+  }
+}
+
+/* ================= NAVEGAÇÃO POR CAMINHO ================= */
+function getAt(path){ return path.split('.').reduce((o,p)=>o[p], state.tabs); }
+function arrFor(path, k){ const o = getAt(path); return k==='obs' ? o : (o.f[k] = o.f[k]||[]); }
+function refresh(path,k){ save(); render(path?{path,k}:null); }
+
+/* ================= EVENTOS ================= */
+document.addEventListener('click', e => {
+  const tabBtn = e.target.closest('[data-tab]');
+  if (tabBtn){ current = tabBtn.dataset.tab; try{localStorage.setItem(KEY+'.tab',current);}catch(_){} render(); return; }
+  const actBtn = e.target.closest('.chip button');
+  if (actBtn){
+    const box = actBtn.closest('.chipbox'), chip = actBtn.closest('.chip');
+    const arr = arrFor(box.dataset.path, box.dataset.k), i = +chip.dataset.i;
+    if (actBtn.dataset.act==='rm') arr.splice(i,1); else arr[i].off = !arr[i].off;
+    refresh(box.dataset.path, box.dataset.k); return;
+  }
+  const box = e.target.closest('.chipbox');
+  if (box && !e.target.closest('.chip')) { box.querySelector('input').focus(); return; }
+  const del = e.target.closest('[data-del]');
+  if (del){
+    const parts = del.dataset.del.split('.'), i = +parts.pop(), arr = getAt(parts.join('.'));
+    if (confirm(`Excluir "${arr[i].nome}"?`)){ arr.splice(i,1); refresh(); toast('Estabelecimento excluído'); }
+    return;
+  }
+  const add = e.target.closest('[data-add],[data-addb]');
+  if (add){
+    const tab = TABS.find(t=>t.id===current);
+    let arr, cols, base;
+    if (add.dataset.add){ arr = state.tabs[add.dataset.add].rows; cols = tab.cols; base = add.dataset.add+'.rows'; }
+    else { const b = getAt(add.dataset.addb); arr = b.rows; cols = b.cols; base = add.dataset.addb+'.rows'; }
+    const f = {}; cols.forEach(k=>f[k]=[]);
+    arr.push({id:uid(), nome:'NOVO ESTABELECIMENTO', f});
+    query=''; $('#search').value=''; save(); render();
+    const el = document.querySelector(`.name[data-path="${base}.${arr.length-1}"]`);
+    if (el){ el.scrollIntoView({block:'center'}); el.focus(); document.execCommand('selectAll',false,null); }
+  }
+});
+document.addEventListener('keydown', e => {
+  const inp = e.target;
+  if (inp.matches('.chipbox > input')){
+    const box = inp.parentElement, arr = arrFor(box.dataset.path, box.dataset.k);
+    const isObs = box.dataset.k === 'obs';
+    if (e.key==='Enter' || (!isObs && e.key===',')){
+      e.preventDefault();
+      const vals = isObs ? [inp.value.trim()] : inp.value.split(/[,;/]/).map(s=>s.trim());
+      vals.filter(Boolean).forEach(v => arr.push({v}));
+      inp.value = '';
+      if (vals.some(Boolean)) refresh(box.dataset.path, box.dataset.k);
+    } else if (e.key==='Backspace' && !inp.value && arr.length){
+      arr.pop(); refresh(box.dataset.path, box.dataset.k);
+    }
+  }
+  if (inp.matches('.name') && e.key==='Enter'){ e.preventDefault(); inp.blur(); }
+  if (inp.matches('.chip-edit')){
+    if (e.key==='Enter') inp.blur();
+    if (e.key==='Escape'){ inp.dataset.cancel='1'; inp.blur(); }
+  }
+});
+document.addEventListener('paste', e => {
+  const inp = e.target;
+  if (!inp.matches('.chipbox > input') || inp.parentElement.dataset.k==='obs') return;
+  const txt = (e.clipboardData||window.clipboardData).getData('text');
+  if (!/[,;/\n\t]/.test(txt)) return;
+  e.preventDefault(); inp.value = '';
+  const box = inp.parentElement, arr = arrFor(box.dataset.path, box.dataset.k);
+  txt.split(/[,;/\n\t]/).map(s=>s.trim()).filter(Boolean).forEach(v=>arr.push({v}));
+  refresh(box.dataset.path, box.dataset.k);
+});
+document.addEventListener('dblclick', e => {
+  const t = e.target.closest('.chip .t'); if (!t) return;
+  const chip = t.parentElement, box = chip.closest('.chipbox'), i = +chip.dataset.i;
+  const arr = arrFor(box.dataset.path, box.dataset.k);
+  const ed = document.createElement('input'); ed.className='chip-edit'; ed.value = arr[i].v;
+  t.replaceWith(ed); ed.focus(); ed.select();
+  ed.addEventListener('blur', () => {
+    if (!ed.dataset.cancel){ const v = ed.value.trim(); if (v) arr[i].v = v; else arr.splice(i,1); save(); }
+    render();
+  });
+});
+document.addEventListener('focusout', e => {
+  const n = e.target;
+  if (n.matches('.name')){
+    const r = getAt(n.dataset.path), v = n.textContent.trim().replace(/\s+/g,' ');
+    if (v && v !== r.nome){ r.nome = v.toUpperCase(); refresh(); } else if (!v) n.textContent = r.nome;
+  }
+  if (n.matches('.chipbox > input') && n.value.trim()){
+    const box = n.parentElement, arr = arrFor(box.dataset.path, box.dataset.k);
+    (box.dataset.k==='obs' ? [n.value.trim()] : n.value.split(/[,;/]/).map(s=>s.trim())).filter(Boolean).forEach(v=>arr.push({v}));
+    n.value=''; save(); setTimeout(()=>render(),0);
+  }
+});
+document.addEventListener('change', e => {
+  const n = e.target;
+  if (n.matches('[data-ovr]')){
+    const b = getAt(n.dataset.ovr), v = n.value.trim();
+    if (v==='' || isNaN(+v)) delete b.ovr[n.dataset.k]; else b.ovr[n.dataset.k] = Math.max(0, Math.round(+v));
+    refresh();
+  }
+});
+$('#comp').addEventListener('input', e => { const v = e.target.value.replace(/\D/g,'').slice(0,6); e.target.value=v; if (v.length===6){ state.competencia=v; $('#hComp').textContent=v; save(); } });
+$('#comp').addEventListener('change', () => render());
+$('#search').addEventListener('input', e => { query = e.target.value.trim(); render(); $('#search').focus(); });
+
+/* ================= BACKUP / IMPORTAR / RESTAURAR ================= */
+function download(blob, name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500); }
+$('#bkp').onclick = () => { download(new Blob([JSON.stringify(state,null,1)],{type:'application/json'}), `gestor-mapeado-${state.competencia}.json`); toast('Backup baixado'); };
+$('#imp').onclick = () => $('#impFile').click();
+$('#impFile').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  f.text().then(t => { const d = JSON.parse(t); if (!d.tabs) throw 0; state = hydrate(d); save(); render(); toast('Dados importados'); })
+   .catch(() => toast('Arquivo inválido')); e.target.value='';
+};
+$('#reset').onclick = () => { if (confirm('Restaurar os dados originais da planilha? Todas as alterações feitas serão perdidas.')){ state = hydrate(SEED); save(); render(); toast('Dados originais restaurados'); } };
+
+/* ================= EXPORTAÇÃO ================= */
+const joinChips = a => (a||[]).map(c => c.off ? `${c.v} (desat.)` : c.v).join(', ') || '-';
+function tableData(tab){
+  // retorna lista de {titulo, head, body, foot, obs}
+  const d = state.tabs[tab.id], out = [];
+  if (tab.tipo==='mapa'){
+    const t = tabTotals(tab);
+    out.push({titulo: `${tab.titulo} — Competência ${state.competencia}`,
+      head: ['Estabelecimento', ...tab.cols.map(k=>COLS[k].l), 'Qtde. Equipes', 'Qtde. EAS'],
+      body: d.rows.map(r => [r.nome, ...tab.cols.map(k=>joinChips(r.f[k])), rowTeams(r,tab.cols), rowEas(r)]),
+      foot: [`TOTAL (${t.est})`, ...tab.cols.map(k=>t.por[k]), t.eq, t.eas],
+      obs: d.obs.map(o=>o.v)});
+  } else {
+    d.blocos.forEach(b => { const t = blocoTotals(b);
+      out.push({titulo: `${b.titulo} — Competência ${state.competencia}`,
+        head: ['Estabelecimento', ...b.cols.map(k=>COLS[k].l), 'Qtde. Equipes'],
+        body: b.rows.map(r => [r.nome, ...b.cols.map(k=>joinChips(r.f[k])), rowTeams(r,b.cols)]),
+        foot: ['TOTAL EQUIPES', ...b.cols.map(k=>t[k]), t.eq],
+        extra: [['TOTAL EAS', t.eas]],
+        obs: b.obs.map(o=>o.v)}); });
+  }
+  return out;
+}
+function exportPDF(tabs, nome){
+  if (!window.jspdf){ toast('Biblioteca de PDF não carregou — verifique a internet'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+  const header = (tabName) => {
+    doc.setFillColor(7,46,80); doc.rect(0,0,W,20,'F');
+    doc.setFillColor(3,75,117); doc.rect(W/2,0,W/2,20,'F');
+    doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(15);
+    doc.text('GESTOR MAPEADO', 12, 9);
+    doc.setFontSize(8.5); doc.setFont('helvetica','normal'); doc.setTextColor(165,208,245);
+    doc.text(`SECRETARIA MUNICIPAL DE SAÚDE - SEMSA  ·  COMPETÊNCIA ${state.competencia}`, 12, 15);
+    doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(12);
+    doc.text(tabName, W-12, 12, {align:'right'});
+  };
+  tabs.forEach((tab, ti) => {
+    if (ti) doc.addPage();
+    header(tab.nome);
+    let y = 27;
+    const t = tabTotals(tab);
+    doc.setFontSize(9); doc.setTextColor(51,65,85); doc.setFont('helvetica','bold');
+    doc.text(`Estabelecimentos: ${t.est}     Qtde. Equipes: ${t.eq}     Qtde. EAS: ${t.eas}`, 12, y); y += 4;
+    tableData(tab).forEach(sec => {
+      if (y > H-40){ doc.addPage(); header(tab.nome); y = 27; }
+      doc.setFontSize(10); doc.setTextColor(3,75,117); doc.text(sec.titulo.toUpperCase(), 12, y+4); y += 6;
+      const nc = sec.head.length;
+      doc.autoTable({
+        startY: y, head:[sec.head], body: sec.body, foot: [sec.foot, ...(sec.extra||[])],
+        margin:{left:10,right:10,top:26}, theme:'grid',
+        styles:{fontSize:7, cellPadding:1.6, lineColor:[203,213,225], lineWidth:.15, textColor:[15,23,42], overflow:'linebreak', valign:'middle'},
+        headStyles:{fillColor:[240,248,255], textColor:[51,65,85], fontStyle:'bold', lineWidth:.15},
+        footStyles:{fillColor:[3,75,117], textColor:255, fontStyle:'bold'},
+        alternateRowStyles:{fillColor:[248,251,255]},
+        columnStyles: Object.assign({0:{cellWidth:52, fontStyle:'bold'}}, ...Array.from({length:nc},(_,i)=> i>=nc-(tab.tipo==='mapa'?2:1) ? {[i]:{halign:'center', cellWidth:17, fontStyle:'bold'}} : {})),
+        showFoot:'lastPage',
+        didDrawPage: () => header(tab.nome)
+      });
+      y = doc.lastAutoTable.finalY + 4;
+      if (sec.obs && sec.obs.length){
+        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(100,116,139);
+        sec.obs.forEach(o => { const lines = doc.splitTextToSize('• '+o, W-24); if (y+lines.length*3.5 > H-14){ doc.addPage(); header(tab.nome); y=27; } doc.text(lines, 12, y+2); y += lines.length*3.5; });
+        doc.setFont('helvetica','bold');
+      }
+      y += 6;
+    });
+  });
+  const n = doc.getNumberOfPages(), stamp = new Date().toLocaleString('pt-BR');
+  for (let i=1;i<=n;i++){ doc.setPage(i); doc.setFontSize(7); doc.setTextColor(100,116,139); doc.setFont('helvetica','normal');
+    doc.text(`DID · Diretoria de Inteligência de Dados — SEMSA Manaus · gerado em ${stamp}`, 10, H-6);
+    doc.text(`Página ${i} de ${n}`, W-10, H-6, {align:'right'}); }
+  doc.save(nome);
+  toast('PDF gerado');
+}
+$('#pdfAll').onclick = () => exportPDF(TABS, `GESTOR_MAPEADO_${state.competencia}_TODAS_AS_ABAS.pdf`);
+$('#pdfOne').onclick = () => { const t = TABS.find(x=>x.id===current); exportPDF([t], `GESTOR_MAPEADO_${state.competencia}_${t.nome.replace(/[^A-Z0-9]+/gi,'_')}.pdf`); };
+$('#xlsx').onclick = () => {
+  if (!window.XLSX){ toast('Biblioteca Excel não carregou'); return; }
+  const wb = XLSX.utils.book_new();
+  TABS.forEach(tab => {
+    const aoa = [];
+    tableData(tab).forEach(sec => { aoa.push([sec.titulo.toUpperCase()], sec.head, ...sec.body, sec.foot, ...(sec.extra||[])); sec.obs.forEach(o=>aoa.push(['OBS: '+o])); aoa.push([]); });
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{wch:52}, ...Array(8).fill({wch:28})];
+    XLSX.utils.book_append_sheet(wb, ws, tab.nome.replace(/[\\/?*\[\]:]/g,'-').slice(0,31));
+  });
+  XLSX.writeFile(wb, `GESTOR_MAPEADO_${state.competencia}.xlsx`);
+};
+
+/* ================= INÍCIO ================= */
+state = load();
+try { current = localStorage.getItem(KEY+'.tab'); } catch(_){}
+if (!TABS.some(t=>t.id===current)) current = 'leste';
+render();
+$('#status').textContent = 'Salvamento automático';
+</script>
+</body>
+</html>
