@@ -28,6 +28,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 .tabs{display:flex;gap:6px;flex-wrap:wrap;padding:0 4px}
 .tab{background:rgba(255,255,255,.08);color:#dbeafe;border:1px solid rgba(255,255,255,.12);border-bottom:none;padding:11px 18px;border-radius:12px 12px 0 0;font-size:13px;font-weight:700;letter-spacing:.6px;cursor:pointer;text-transform:uppercase;transition:.2s;white-space:nowrap}
 .tab:hover{background:rgba(255,255,255,.16);color:#fff}
+.tab[data-tab="qrp"]{background:rgba(16,185,129,.18);border-color:rgba(16,185,129,.45);color:#d1fae5}
 .tab.active{background:var(--panel);color:var(--navy2);border-color:var(--panel)}
 
 /* Container */
@@ -116,6 +117,37 @@ tfoot input:focus{border-color:#fff;background:rgba(255,255,255,.22)}
 .footer-right{text-align:right;line-height:1.6}
 .footer-right img{max-height:40px;margin-bottom:10px}
 
+/* Validador QRP */
+.qparams{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+.qparams .kpi .v.sm{font-size:16px;padding-top:6px}
+.qparams input{width:110px;font:inherit;font-size:22px;font-weight:800;color:var(--navy2);border:1px dashed var(--line2);border-radius:8px;padding:0 6px;outline:none;background:#f8fbff}
+.qparams input:focus{border:1px solid var(--sky)}
+.drop{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:26px;border:2px dashed var(--sky-soft);border-radius:12px;background:#fff;cursor:pointer;color:var(--ink2);font-size:14px;transition:.2s}
+.drop:hover,.drop.over{border-color:var(--sky);background:#e8f5fd}
+.drop-ic{font-size:30px;color:var(--sky);line-height:1}
+.qlist{margin-top:18px;display:flex;flex-direction:column;gap:18px}
+.qcard{background:#fff;border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:18px 20px;box-shadow:0 2px 6px rgba(0,0,0,.04)}
+.qcard.bad{border-left-color:var(--red)}
+.qhead{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:flex-start}
+.qfile{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.3px;word-break:break-all}
+.qest{font-size:17px;font-weight:800;color:var(--ink);margin-top:3px}
+.qtab{font-size:10.5px;background:#e0f2fe;color:var(--navy2);padding:3px 9px;border-radius:9999px;vertical-align:middle;margin-left:6px}
+.qmeta{font-size:12px;color:var(--muted);margin-top:4px}
+.qbadge{padding:8px 16px;border-radius:9999px;font-weight:800;font-size:12px;letter-spacing:.4px;white-space:nowrap}
+.qbadge.good{background:#dcfce7;color:#065f46}.qbadge.bad{background:#fdecf1;color:#9f1239}
+.qbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}
+.qbar .sep{flex:1}
+.qbar select{padding:8px 12px;border:1px solid var(--line2);border-radius:9999px;font-size:13px;max-width:420px;background:#fff;color:var(--ink);text-transform:none;font-weight:600}
+table.qt td{white-space:normal;vertical-align:middle}
+.pill{display:inline-block;padding:4px 10px;border-radius:9999px;font-weight:800;font-size:11px;white-space:nowrap}
+.pill.ok{background:#dcfce7;color:#065f46}.pill.bad{background:#fdecf1;color:#be123c}.pill.warn{background:#fef3c7;color:#92400e}.pill.muted{background:#f1f5f9;color:#64748b}
+.apont{margin:14px 0;background:#fff7f9;border:1px solid #f9c6d5;border-radius:10px;padding:12px 18px;font-size:13px;color:var(--ink)}
+.apont.good{background:#f0fdf4;border-color:#bbf7d0}
+.apont h4{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#be123c}
+.apont.good h4{color:#065f46}
+.apont ol{margin:0;padding-left:20px}.apont li{margin:4px 0;line-height:1.45}
+.qgrid{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+@media (max-width:1000px){.qgrid{grid-template-columns:1fr}}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:9999px;font-size:13px;font-weight:600;opacity:0;transition:.25s;pointer-events:none;z-index:99}
 .toast.on{opacity:1;transform:translateX(-50%)}
 
@@ -196,6 +228,7 @@ const TABS = [
   {id:'prisionais',nome:'PRISIONAIS',  titulo:'Unidades Prisionais',   tipo:'mapa', cols:['esf','eapp','esb']},
   {id:'mmt',       nome:'MMT',         titulo:'MMT',                   tipo:'blocos'},
   {id:'samu',      nome:'SAMU',        titulo:'SAMU',                  tipo:'blocos'},
+  {id:'qrp',       nome:'⇪ VALIDAR QRP', titulo:'Validação de Protocolos QRP', tipo:'qrp'},
 ];
 const KEY = 'gestorMapeado.v1';
 const teamCols = cols => cols.filter(c => c !== 'vinc');
@@ -350,7 +383,8 @@ function render(keepFocus){
   $('#hComp').textContent = state.competencia;
   $('#comp').value = state.competencia;
   renderTabs();
-  $('#view').innerHTML = tab.tipo==='mapa' ? renderMapa(tab) : renderBlocos(tab);
+  $('#view').innerHTML = tab.tipo==='mapa' ? renderMapa(tab) : tab.tipo==='qrp' ? renderQrp() : renderBlocos(tab);
+  $('#search').style.display = tab.tipo==='qrp' ? 'none' : '';
   if (keepFocus){
     const box = document.querySelector(`.chipbox[data-path="${keepFocus.path}"][data-k="${keepFocus.k}"] input`);
     if (box) box.focus();
@@ -547,12 +581,13 @@ function exportPDF(tabs, nome){
   doc.save(nome);
   toast('PDF gerado');
 }
-$('#pdfAll').onclick = () => exportPDF(TABS, `GESTOR_MAPEADO_${state.competencia}_TODAS_AS_ABAS.pdf`);
-$('#pdfOne').onclick = () => { const t = TABS.find(x=>x.id===current); exportPDF([t], `GESTOR_MAPEADO_${state.competencia}_${t.nome.replace(/[^A-Z0-9]+/gi,'_')}.pdf`); };
+const DATA_TABS = TABS.filter(t => t.tipo!=='qrp');
+$('#pdfAll').onclick = () => exportPDF(DATA_TABS, `GESTOR_MAPEADO_${state.competencia}_TODAS_AS_ABAS.pdf`);
+$('#pdfOne').onclick = () => { const t = TABS.find(x=>x.id===current); if (t.tipo==='qrp'){ qrpFiles.filter(f=>!f.erro).length ? qrpPDF(qrpFiles.filter(f=>!f.erro)) : toast('Carregue um arquivo .qrp'); return; } exportPDF([t], `GESTOR_MAPEADO_${state.competencia}_${t.nome.replace(/[^A-Z0-9]+/gi,'_')}.pdf`); };
 $('#xlsx').onclick = () => {
   if (!window.XLSX){ toast('Biblioteca Excel não carregou'); return; }
   const wb = XLSX.utils.book_new();
-  TABS.forEach(tab => {
+  DATA_TABS.forEach(tab => {
     const aoa = [];
     tableData(tab).forEach(sec => { aoa.push([sec.titulo.toUpperCase()], sec.head, ...sec.body, sec.foot, ...(sec.extra||[])); sec.obs.forEach(o=>aoa.push(['OBS: '+o])); aoa.push([]); });
     const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -561,6 +596,344 @@ $('#xlsx').onclick = () => {
   });
   XLSX.writeFile(wb, `GESTOR_MAPEADO_${state.competencia}.xlsx`);
 };
+
+/* ================= VALIDADOR QRP (Transmissor DID) ================= */
+let qrpFiles = [];   // {id, nome, data, matchId, erro}
+const TIPO_KEY = {ESF:'esf', EAP:'eap', ESB:'esb', EMULTI:'emulti', ECR:'ecr', EAPP:'eapp'};
+const cfg = () => (state.config = state.config || {versao:'4.8.50'});
+const fmtComp = c => c ? `${c.slice(4,6)}/${c.slice(0,4)}` : '-';
+const norm = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase();
+const nkey = s => norm(String(s).split('(')[0]).replace(/[^A-Z0-9]/g,'');
+const estKey = s => norm(s).replace(/^\s*(USF|UBS|UBSF|USF\s*-)\s+/,'').replace(/[^A-Z0-9]/g,'');
+function teamKey(nome, tipo){
+  let s = norm(nome).replace(/[^A-Z0-9 ]/g,' ').trim();
+  const pref = norm(tipo||'').replace(/[^A-Z]/g,'');
+  if (pref && s.replace(/\s/g,'').startsWith(pref)) s = s.replace(/\s/g,'').slice(pref.length);
+  s = s.replace(/[^A-Z0-9]/g,'');
+  return /^\d+$/.test(s) ? String(+s) : s;
+}
+const chipKey = v => { const k = nkey(v); return /^\d+$/.test(k) ? String(+k) : k; };
+function cmpVer(a,b){ const x=a.split('.').map(Number), y=b.split('.').map(Number); for(let i=0;i<Math.max(x.length,y.length);i++){ const d=(x[i]||0)-(y[i]||0); if(d) return d<0?-1:1; } return 0; }
+
+/* --- leitura do .qrp (relatório EMF com texto UTF-16) --- */
+function parseQRP(buf){
+  const u8 = new Uint8Array(buf), dv = new DataView(buf), items = [];
+  let page = 0;
+  for (let p = 40; p < u8.length - 4; p++){
+    if (u8[p]!==0x20 || u8[p+1]!==0x45 || u8[p+2]!==0x4D || u8[p+3]!==0x46) continue;
+    let off = p - 40;
+    if (off < 0 || dv.getUint32(off,true) !== 1) continue;
+    page++;
+    while (off + 8 <= u8.length){
+      const type = dv.getUint32(off,true), size = dv.getUint32(off+4,true);
+      if (size < 8 || off + size > u8.length) break;
+      if ((type===84 || type===83) && size >= 76){
+        const x = dv.getInt32(off+36,true), y = dv.getInt32(off+40,true);
+        const n = dv.getUint32(off+44,true), so = dv.getUint32(off+48,true);
+        let s = '';
+        if (type===84){ for (let i=0;i<n;i++){ const o=off+so+2*i; if (o+1>=u8.length) break; s += String.fromCharCode(dv.getUint16(o,true)); } }
+        else { for (let i=0;i<n;i++) s += String.fromCharCode(u8[off+so+i]); }
+        s = s.replace(/\u0000/g,'').trim();
+        if (s) items.push({page, x, y, s});
+      }
+      if (type === 14) break;
+      off += size;
+    }
+    p = off;
+  }
+  if (!items.length) throw new Error('Não foi possível ler o protocolo (arquivo .qrp sem texto reconhecível).');
+  const d = {equipes:[], estabelecimentos:[], totalEq:null, totalEst:null, paginas:page};
+  let sec = null;
+  items.forEach((it, i) => {
+    const s = it.s; let m;
+    if ((m = s.match(/Compet[eê]ncia\s*:\s*(\d{2})\/(\d{4})/i))) d.competencia = m[2]+m[1];
+    if ((m = s.match(/Vers[aã]o\s*:\s*([\d.]+)/i))) d.versao = m[1];
+    if ((m = s.match(/Tipo\s*:\s*(.*?)\s+Origem\s*:\s*(.*?)\s+Destino\s*:\s*(.*)$/i))){ d.tipo=m[1].trim(); d.origem=m[2].trim(); d.destino=m[3].trim(); }
+    else if ((m = s.match(/^Tipo\s*:\s*(.+)$/i))) d.tipo = m[1].trim();
+    if ((m = s.match(/gera[cç][aã]o da exporta[cç][aã]o\s*:\s*(.+)$/i))) d.geracao = m[1].trim();
+    if ((m = s.match(/Nome do Arquivo\s*:\s*(.+)$/i))) d.arquivo = m[1].trim();
+    if ((m = s.match(/^Munic[ií]pio\s*:\s*(.+)$/i))) d.municipio = m[1].trim();
+    if (/EQUIPE\(S\)\s*EXPORTADA/i.test(s)){ sec='eq'; return; }
+    if (/ESTABELECIMENTO\(S\)\s*EXPORTADO/i.test(s)){ sec='est'; return; }
+    if ((m = s.match(/^TOTAL\s*:\s*(\d+)/i))){ if (sec==='eq') d.totalEq=+m[1]; else if (sec==='est') d.totalEst=+m[1]; sec=null; return; }
+    if (sec==='eq' && (m = s.match(/^(\d{7})\s*-\s*(\d+)\s*-\s*(.+)$/))){
+      const nx = items.slice(i+1).find(o => o.page===it.page && Math.abs(o.y-it.y)<=4 && o.x>it.x);
+      const tipoTxt = nx ? nx.s : '';
+      const sigla = norm(tipoTxt.split(' - ')[0] || m[3].split('-')[0]).replace(/[^A-Z]/g,'');
+      d.equipes.push({cnes:m[1], area:m[2], nome:m[3].trim(), tipo:tipoTxt, sigla, key:teamKey(m[3], sigla)});
+    } else if (sec==='est' && (m = s.match(/^(\d{7})\s*-\s*(.+)$/))){
+      d.estabelecimentos.push({cnes:m[1], nome:m[2].trim()});
+    }
+  });
+  if (d.totalEq===null) d.totalEq = d.equipes.length;
+  if (d.totalEst===null) d.totalEst = d.estabelecimentos.length;
+  return d;
+}
+
+/* --- estabelecimentos do Gestor Mapeado --- */
+function allRows(){
+  const out = [];
+  TABS.forEach(tab => {
+    const t = state.tabs[tab.id]; if (!t) return;
+    if (tab.tipo==='mapa') t.rows.forEach(r => out.push({tab, row:r, cols:tab.cols}));
+    else if (tab.tipo==='blocos') t.blocos.forEach(b => b.rows.forEach((r,i) => out.push({tab, row:r, cols:b.cols, bloco:b, base:i===0})));
+  });
+  return out;
+}
+function findRow(id){ return allRows().find(x => x.row.id === id); }
+function autoMatch(d){
+  const rows = allRows(); let best=null, score=0;
+  d.estabelecimentos.forEach(e => {
+    const ek = estKey(e.nome), et = new Set(norm(e.nome).split(/\W+/).filter(w=>w.length>2 && w!=='USF'));
+    rows.forEach(x => {
+      const rk = estKey(x.row.nome); let sc = 0;
+      if (rk === ek) sc = 100;
+      else if (ek.length>4 && (rk.startsWith(ek) || rk.includes(ek))) sc = 80;
+      else { const rt = new Set(norm(x.row.nome).split(/\W+/).filter(w=>w.length>2 && w!=='USF')); const inter=[...et].filter(w=>rt.has(w)).length; const uni=new Set([...et,...rt]).size; sc = uni? 70*inter/uni : 0; }
+      if (sc > score){ score = sc; best = x; }
+    });
+  });
+  return score >= 35 ? best.row.id : null;
+}
+
+/* --- análise das críticas --- */
+function analisar(f){
+  const d = f.data, c = cfg(), x = f.matchId ? findRow(f.matchId) : null;
+  const res = {criticas:[], apont:[], equipes:[], ests:[], x};
+  let espEq=null, espEas=null;
+  if (x){
+    if (x.bloco && x.base){ const t = blocoTotals(x.bloco); espEq=t.eq; espEas=t.eas; }
+    else { espEq=rowTeams(x.row,x.cols); espEas= x.cols.includes('vinc') ? rowEas(x.row) : 1; }
+  }
+  const add = (n, nome, esperado, obtido, ok, apont) => { res.criticas.push({n, nome, esperado, obtido, ok}); if (!ok && apont) res.apont.push(apont); };
+  add(1,'Competência vigente', fmtComp(state.competencia), d.competencia?fmtComp(d.competencia):'não informada', d.competencia===state.competencia,
+    `Competência do protocolo (${d.competencia?fmtComp(d.competencia):'não identificada'}) diferente da competência ativa (${fmtComp(state.competencia)}). Gerar nova exportação no SCNES na competência ${fmtComp(state.competencia)} e reenviar pelo Transmissor.`);
+  const vOk = d.versao && cmpVer(d.versao, c.versao)===0;
+  add(2,'Versão do SCNES', c.versao, d.versao||'não informada', vOk,
+    !d.versao ? 'Versão do SCNES não identificada no protocolo. Verificar o arquivo gerado.' :
+    cmpVer(d.versao,c.versao)<0 ? `SCNES desatualizado (versão ${d.versao}). Atualizar para a versão ${c.versao}, gerar nova exportação e reenviar.` :
+    `Versão do protocolo (${d.versao}) diferente da versão vigente parametrizada (${c.versao}). Confirmar a versão oficial do SCNES.`);
+  add(3,'Tipo de exportação', 'Completa', d.tipo||'não informado', norm(d.tipo)==='COMPLETA',
+    `Tipo de exportação "${d.tipo||'-'}". A exportação deve ser do tipo COMPLETA: refazer a exportação selecionando "Completa".`);
+  const ests = d.estabelecimentos, eqs = d.equipes;
+  add(4,'Nº de estabelecimentos', espEas ?? '—', d.totalEst, espEas!==null && d.totalEst===espEas,
+    espEas===null ? 'Estabelecimento não localizado no Gestor Mapeado: selecione o estabelecimento correspondente para comparar.' :
+    `O protocolo exportou ${d.totalEst} estabelecimento(s), mas o Gestor Mapeado prevê ${espEas} (Qtde. EAS). Verificar no SCNES local as unidades vinculadas exportadas (detalhamento abaixo).`);
+  add(5,'Nº de equipes', espEq ?? '—', d.totalEq, espEq!==null && d.totalEq===espEq,
+    espEq===null ? null :
+    `O protocolo exportou ${d.totalEq} equipe(s), mas o Gestor Mapeado prevê ${espEq} (Qtde. Equipes). Conferir no SCNES as equipes ausentes/excedentes (detalhamento abaixo).`);
+  add(6,'Destino', 'Município P. Gestão', d.destino||'não informado', norm(d.destino).replace(/\s+/g,' ')==='MUNICIPIO P. GESTAO',
+    `Destino da exportação "${d.destino||'-'}". Refazer a exportação com destino "Município P. Gestão".`);
+  if (d.equipes.length !== d.totalEq) res.apont.push(`Inconsistência interna do protocolo: ${d.equipes.length} equipe(s) listada(s) e TOTAL informado ${d.totalEq}.`);
+
+  // detalhamento: equipes
+  if (x){
+    const tc = teamCols(x.cols), gest = [];
+    const rowsForTeams = (x.bloco && x.base) ? x.bloco.rows : [x.row];
+    rowsForTeams.forEach(r => tc.forEach(k => (r.f[k]||[]).forEach(ch => gest.push({k, v:ch.v, off:!!ch.off, key:chipKey(ch.v), used:false}))));
+    eqs.forEach(e => {
+      const k = TIPO_KEY[e.sigla] || null;
+      let g = gest.find(g => !g.used && g.key===e.key && (!k || g.k===k));
+      if (!g) g = gest.find(g => !g.used && g.key===e.key);
+      if (g){ g.used = true;
+        const tipoDiv = k && g.k!==k;
+        res.equipes.push({nome:e.nome, ine:`${e.cnes} - ${e.area}`, tipo:e.sigla, gestor:`${COLS[g.k].l}: ${g.v}`, st: g.off?'off':tipoDiv?'tipo':'ok'});
+        if (g.off) res.apont.push(`Equipe ${e.nome} (${e.sigla}) foi exportada, mas está marcada como DESATIVADA no Gestor Mapeado. Confirmar a situação da equipe.`);
+        if (tipoDiv) res.apont.push(`Equipe ${e.nome}: tipo no protocolo ${e.sigla}, no Gestor Mapeado está em ${COLS[g.k].l}. Conferir o tipo da equipe.`);
+      } else {
+        res.equipes.push({nome:e.nome, ine:`${e.cnes} - ${e.area}`, tipo:e.sigla, gestor:'—', st:'extra'});
+        res.apont.push(`Equipe ${e.nome} (${e.sigla}) consta no protocolo, mas NÃO está mapeada no Gestor Mapeado. Verificar se é equipe nova ou cadastrada no estabelecimento errado.`);
+      }
+    });
+    gest.filter(g => !g.used && !g.off).forEach(g => {
+      res.equipes.push({nome:g.v, ine:'—', tipo:COLS[g.k].l, gestor:`${COLS[g.k].l}: ${g.v}`, st:'falta'});
+      res.apont.push(`Equipe ${COLS[g.k].l} ${g.v} está mapeada no Gestor Mapeado, mas NÃO foi exportada no protocolo. Verificar no SCNES local se a equipe está ativa e vinculada ao estabelecimento.`);
+    });
+    // estabelecimentos
+    const vinc = x.cols.includes('vinc') ? (x.row.f.vinc||[]).map(ch => ({v:ch.v, off:!!ch.off, key:estKey(ch.v), used:false})) : [];
+    const mainKey = estKey(x.row.nome);
+    let mainFound = false;
+    ests.forEach(e => {
+      const ek = estKey(e.nome);
+      if (!mainFound && (ek===mainKey || (ek.length>4 && mainKey.includes(ek)) || f.mainCnes===e.cnes)){ mainFound = true; f.mainCnes = e.cnes; res.ests.push({cnes:e.cnes, nome:e.nome, gestor:'Estabelecimento principal', st:'ok'}); return; }
+      const v = vinc.find(v => !v.used && (v.key===ek || ek.endsWith(v.key) || v.key.endsWith(ek)));
+      if (v){ v.used = true; res.ests.push({cnes:e.cnes, nome:e.nome, gestor:`Vinculada: ${v.v}`, st:v.off?'off':'ok'});
+        if (v.off) res.apont.push(`Unidade ${e.nome} foi exportada, mas está marcada como DESATIVADA no Gestor Mapeado.`); }
+      else { res.ests.push({cnes:e.cnes, nome:e.nome, gestor:'—', st:'extra'});
+        res.apont.push(`Estabelecimento ${e.cnes} - ${e.nome} consta no protocolo, mas não está mapeado no Gestor Mapeado (nem como unidade vinculada).`); }
+    });
+    if (!mainFound && !(x.bloco && x.base)){ res.ests.unshift({cnes:'—', nome:x.row.nome, gestor:'Estabelecimento principal', st:'falta'});
+      res.apont.push(`O estabelecimento principal (${x.row.nome}) não foi identificado na lista de estabelecimentos exportados.`); }
+    vinc.filter(v => !v.used && !v.off).forEach(v => { res.ests.push({cnes:'—', nome:v.v, gestor:`Vinculada: ${v.v}`, st:'falta'});
+      res.apont.push(`Unidade vinculada ${v.v} está mapeada no Gestor Mapeado, mas NÃO foi exportada no protocolo. Verificar se a unidade foi incluída na base local do SCNES.`); });
+  } else {
+    eqs.forEach(e => res.equipes.push({nome:e.nome, ine:`${e.cnes} - ${e.area}`, tipo:e.sigla, gestor:'—', st:'na'}));
+    ests.forEach(e => res.ests.push({cnes:e.cnes, nome:e.nome, gestor:'—', st:'na'}));
+  }
+  res.ok = res.criticas.every(c => c.ok) && res.apont.length===0;
+  res.nCrit = res.criticas.filter(c=>!c.ok).length;
+  return res;
+}
+
+/* --- interface --- */
+const ST = {ok:['✔','Confere','ok'], extra:['▲','Só no protocolo','warn'], falta:['▼','Não exportada','bad'], off:['⊘','Desativada no Gestor','warn'], tipo:['≠','Tipo divergente','warn'], na:['–','Sem vínculo','muted']};
+function rowOptions(sel){
+  const groups = {};
+  allRows().forEach(x => (groups[x.tab.nome] = groups[x.tab.nome] || []).push(x));
+  return `<option value="">— selecione o estabelecimento —</option>` + Object.entries(groups).map(([g,xs]) =>
+    `<optgroup label="${esc(g)}">${xs.map(x=>`<option value="${x.row.id}"${x.row.id===sel?' selected':''}>${esc(x.row.nome)}${x.bloco&&x.base?' (base centralizada)':''}</option>`).join('')}</optgroup>`).join('');
+}
+function renderQrp(){
+  const c = cfg();
+  const cards = qrpFiles.map(f => {
+    if (f.erro) return `<div class="qcard bad"><div class="qhead"><div><div class="qfile">${esc(f.nome)}</div><div class="qest">${esc(f.erro)}</div></div>
+      <button class="del" data-qrm="${f.id}" title="Remover">🗑</button></div></div>`;
+    const d = f.data, r = analisar(f);
+    return `<div class="qcard ${r.ok?'good':'bad'}">
+      <div class="qhead">
+        <div>
+          <div class="qfile">${esc(f.nome)}</div>
+          <div class="qest">${r.x ? esc(r.x.row.nome)+' <span class="qtab">'+esc(r.x.tab.nome)+'</span>' : 'Estabelecimento não identificado'}</div>
+          <div class="qmeta">Gerado em ${esc(d.geracao||'-')} · ${esc(d.municipio||'-')} · Origem: ${esc(d.origem||'-')}</div>
+        </div>
+        <div class="qbadge ${r.ok?'good':'bad'}">${r.ok?'✔ SEM CRÍTICAS':`✖ ${r.nCrit} CRÍTICA(S)${r.apont.length>r.nCrit?' · '+r.apont.length+' APONTAMENTO(S)':''}`}</div>
+      </div>
+      <div class="qbar">
+        <label class="field">Comparar com <select data-qmatch="${f.id}">${rowOptions(f.matchId)}</select></label>
+        <span class="sep"></span>
+        <button class="btn btn-success" data-qpdf="${f.id}">⬇ PDF para o estabelecimento</button>
+        <button class="btn btn-danger-ghost" data-qrm="${f.id}">Remover</button>
+      </div>
+      <div class="table-wrap"><table class="qt">
+        <thead><tr><th>#</th><th>Crítica do Transmissor DID</th><th>Gestor Mapeado / Parâmetro</th><th>Protocolo (.qrp)</th><th class="num">Situação</th></tr></thead>
+        <tbody>${r.criticas.map(k=>`<tr><td>${k.n}</td><td><b>${k.nome}</b></td><td>${esc(k.esperado)}</td><td>${esc(k.obtido)}</td>
+          <td class="num"><span class="pill ${k.ok?'ok':'bad'}">${k.ok?'✔ OK':'✖ CRÍTICA'}</span></td></tr>`).join('')}</tbody>
+      </table></div>
+      ${r.apont.length ? `<div class="apont"><h4>Apontamentos para correção</h4><ol>${r.apont.map(a=>`<li>${esc(a)}</li>`).join('')}</ol></div>` : `<div class="apont good"><h4>Nenhuma correção necessária</h4>O protocolo está de acordo com o Gestor Mapeado e com as críticas do Transmissor DID.</div>`}
+      <div class="qgrid">
+        <div><div class="bloco-title">Equipes exportadas × Gestor Mapeado</div>
+          <div class="table-wrap"><table class="qt"><thead><tr><th>Equipe</th><th>CNES - Área</th><th>Tipo</th><th>Gestor Mapeado</th><th>Situação</th></tr></thead>
+          <tbody>${r.equipes.map(e=>`<tr><td><b>${esc(e.nome)}</b></td><td>${esc(e.ine)}</td><td>${esc(e.tipo)}</td><td>${esc(e.gestor)}</td><td><span class="pill ${ST[e.st][2]}">${ST[e.st][0]} ${ST[e.st][1]}</span></td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nenhuma equipe.</td></tr>'}</tbody></table></div></div>
+        <div><div class="bloco-title">Estabelecimentos exportados × Gestor Mapeado</div>
+          <div class="table-wrap"><table class="qt"><thead><tr><th>CNES</th><th>Estabelecimento</th><th>Gestor Mapeado</th><th>Situação</th></tr></thead>
+          <tbody>${r.ests.map(e=>`<tr><td>${esc(e.cnes)}</td><td><b>${esc(e.nome)}</b></td><td>${esc(e.gestor)}</td><td><span class="pill ${ST[e.st][2]}">${ST[e.st][0]} ${ST[e.st][1]}</span></td></tr>`).join('')}</tbody></table></div></div>
+      </div>
+    </div>`;
+  }).join('');
+  const tot = qrpFiles.filter(f=>!f.erro).map(analisar), ok = tot.filter(r=>r.ok).length;
+  return `<div class="section">
+    <div class="section-head"><div><h3>Validação de Protocolos QRP — Transmissor DID</h3>
+      <div class="sub">Compara o protocolo de exportação (.qrp) enviado com a base (.bck) com o Gestor Mapeado da competência ${fmtComp(state.competencia)}</div></div></div>
+    <div class="qparams">
+      <div class="kpi"><div class="l">Competência ativa</div><div class="v">${fmtComp(state.competencia)}</div></div>
+      <div class="kpi"><div class="l">Versão SCNES vigente</div><div class="v"><input id="qver" value="${esc(c.versao)}" title="Versão aceita pelo Transmissor"></div></div>
+      <div class="kpi"><div class="l">Tipo exigido</div><div class="v sm">Completa</div></div>
+      <div class="kpi"><div class="l">Destino exigido</div><div class="v sm">Município P. Gestão</div></div>
+      ${qrpFiles.length?`<div class="kpi main"><div class="l">Protocolos</div><div class="v">${ok}/${qrpFiles.length} <span style="font-size:12px;font-weight:600">sem críticas</span></div></div>`:''}
+    </div>
+    <label class="drop" id="drop">
+      <input type="file" id="qrpIn" accept=".qrp,.QRP" multiple hidden>
+      <div class="drop-ic">⇪</div>
+      <div><b>Arraste os arquivos .qrp aqui</b> ou clique para selecionar</div>
+      <div class="hint">Aceita vários protocolos de uma vez. O estabelecimento é identificado automaticamente pelo nome — confira ou ajuste em “Comparar com”.</div>
+    </label>
+    ${qrpFiles.length>1?`<div style="margin:14px 0 0;display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-success" id="qpdfAll">⬇ PDF de todos os protocolos</button><button class="btn btn-danger-ghost" id="qclear">Limpar lista</button></div>`:''}
+    <div class="qlist">${cards}</div>
+  </div>`;
+}
+function addQrpFiles(list){
+  const fs = [...list].filter(f => /\.qrp$/i.test(f.name));
+  if (!fs.length){ toast('Selecione arquivos .qrp'); return; }
+  Promise.all(fs.map(file => file.arrayBuffer().then(buf => {
+    const f = {id:uid(), nome:file.name};
+    try { f.data = parseQRP(buf); f.matchId = autoMatch(f.data); } catch(e){ f.erro = e.message; }
+    return f;
+  }))).then(arr => { qrpFiles = arr.concat(qrpFiles); render(); toast(`${arr.length} protocolo(s) analisado(s)`); });
+}
+document.addEventListener('change', e => {
+  if (e.target.id==='qrpIn'){ addQrpFiles(e.target.files); e.target.value=''; }
+  if (e.target.matches('[data-qmatch]')){ const f = qrpFiles.find(q=>q.id===e.target.dataset.qmatch); f.matchId = e.target.value||null; f.mainCnes=null; render(); }
+  if (e.target.id==='qver'){ const v = e.target.value.trim(); if (/^\d+(\.\d+)*$/.test(v)){ cfg().versao = v; save(); } render(); }
+});
+document.addEventListener('click', e => {
+  const rm = e.target.closest('[data-qrm]'); if (rm){ e.preventDefault(); qrpFiles = qrpFiles.filter(f=>f.id!==rm.dataset.qrm); render(); return; }
+  const pd = e.target.closest('[data-qpdf]'); if (pd){ const f = qrpFiles.find(q=>q.id===pd.dataset.qpdf); qrpPDF([f]); return; }
+  if (e.target.id==='qpdfAll') qrpPDF(qrpFiles.filter(f=>!f.erro));
+  if (e.target.id==='qclear'){ qrpFiles = []; render(); }
+});
+['dragover','dragenter'].forEach(ev => document.addEventListener(ev, e => { const d = e.target.closest && e.target.closest('#drop'); if (d){ e.preventDefault(); d.classList.add('over'); } }));
+document.addEventListener('dragleave', e => { const d = e.target.closest && e.target.closest('#drop'); if (d) d.classList.remove('over'); });
+document.addEventListener('drop', e => { const d = e.target.closest && e.target.closest('#drop'); if (d){ e.preventDefault(); d.classList.remove('over'); addQrpFiles(e.dataTransfer.files); } });
+
+/* --- PDF de críticas --- */
+function qrpPDF(files){
+  if (!files.length) return;
+  if (!window.jspdf){ toast('Biblioteca de PDF não carregou — verifique a internet'); return; }
+  const { jsPDF } = window.jspdf, doc = new jsPDF({unit:'mm', format:'a4'});
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+  const header = () => {
+    doc.setFillColor(7,46,80); doc.rect(0,0,W,22,'F'); doc.setFillColor(3,75,117); doc.rect(W*0.55,0,W*0.45,22,'F');
+    doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text('RELATÓRIO DE CRÍTICAS — PROTOCOLO SCNES', 12, 10);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(165,208,245);
+    doc.text('TRANSMISSOR DID · GESTOR MAPEADO · SECRETARIA MUNICIPAL DE SAÚDE - SEMSA', 12, 16);
+  };
+  const colors = {ok:[16,185,129], bad:[224,36,94], warn:[217,119,6], muted:[100,116,139]};
+  files.forEach((f, fi) => {
+    if (fi) doc.addPage();
+    header();
+    const d = f.data, r = analisar(f);
+    let y = 30;
+    doc.setTextColor(15,23,42); doc.setFont('helvetica','bold'); doc.setFontSize(12);
+    doc.text(doc.splitTextToSize(r.x ? r.x.row.nome : (d.estabelecimentos[0]?.nome || 'Estabelecimento não identificado'), W-70), 12, y);
+    const st = r.ok ? 'SEM CRÍTICAS' : `${r.nCrit} CRÍTICA(S)`;
+    doc.setFillColor(...(r.ok?colors.ok:colors.bad)); doc.roundedRect(W-58, y-5.5, 46, 8, 4, 4, 'F');
+    doc.setTextColor(255); doc.setFontSize(9); doc.text(st, W-35, y-0.3, {align:'center'});
+    y += 6;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(51,65,85);
+    [ `Distrito: ${r.x ? r.x.tab.nome : '-'}     CNES: ${d.estabelecimentos.map(e=>e.cnes).join(', ')||'-'}`,
+      `Arquivo: ${d.arquivo || f.nome}`,
+      `Gerado em: ${d.geracao||'-'}     Município: ${d.municipio||'-'}     Origem: ${d.origem||'-'}`,
+      `Competência ativa no Gestor Mapeado: ${fmtComp(state.competencia)}     Versão SCNES vigente: ${cfg().versao}` ].forEach(l => { doc.text(l, 12, y); y += 4.6; });
+    doc.autoTable({
+      startY: y+2, margin:{left:12,right:12,top:28}, theme:'grid',
+      head:[['#','Crítica','Gestor Mapeado / Parâmetro','Protocolo (.qrp)','Situação']],
+      body: r.criticas.map(k => [k.n, k.nome, String(k.esperado), String(k.obtido), k.ok?'OK':'CRÍTICA']),
+      styles:{fontSize:8.5, cellPadding:2, lineColor:[203,213,225], lineWidth:.15, textColor:[15,23,42]},
+      headStyles:{fillColor:[3,75,117], textColor:255}, columnStyles:{0:{cellWidth:8,halign:'center'},1:{fontStyle:'bold'},4:{halign:'center',fontStyle:'bold',cellWidth:24}},
+      didParseCell: c => { if (c.section==='body' && c.column.index===4){ c.cell.styles.textColor = c.cell.raw==='OK' ? colors.ok : colors.bad; } },
+      didDrawPage: header
+    });
+    y = doc.lastAutoTable.finalY + 8;
+    doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(3,75,117);
+    doc.text(r.apont.length ? 'APONTAMENTOS PARA CORREÇÃO' : 'NENHUMA CORREÇÃO NECESSÁRIA', 12, y); y += 5;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(15,23,42);
+    (r.apont.length ? r.apont.map((a,i)=>`${i+1}. ${a}`) : ['O protocolo está de acordo com o Gestor Mapeado e com as críticas do Transmissor DID.']).forEach(a => {
+      const lines = doc.splitTextToSize(a, W-26);
+      if (y + lines.length*4.2 > H-20){ doc.addPage(); header(); y = 30; }
+      doc.text(lines, 14, y); y += lines.length*4.2 + 1.5;
+    });
+    const sec = (titulo, head, body) => {
+      y += 4; if (y > H-40){ doc.addPage(); header(); y = 30; }
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(3,75,117); doc.text(titulo, 12, y);
+      doc.autoTable({ startY:y+2, margin:{left:12,right:12,top:28}, theme:'grid', head:[head], body,
+        styles:{fontSize:8, cellPadding:1.8, lineColor:[203,213,225], lineWidth:.15, textColor:[15,23,42]},
+        headStyles:{fillColor:[240,248,255], textColor:[51,65,85]},
+        didParseCell: c => { if (c.section==='body' && c.column.index===head.length-1){ const k = Object.values(ST).find(s=>s[1]===c.cell.raw); if (k) { c.cell.styles.textColor = colors[k[2]]; c.cell.styles.fontStyle='bold'; } } },
+        didDrawPage: header });
+      y = doc.lastAutoTable.finalY + 4;
+    };
+    sec(`EQUIPES — protocolo: ${d.totalEq}  ·  Gestor Mapeado: ${r.criticas[4].esperado}`, ['Equipe','CNES - Área','Tipo','Gestor Mapeado','Situação'], r.equipes.map(e=>[e.nome,e.ine,e.tipo,e.gestor,ST[e.st][1]]));
+    sec(`ESTABELECIMENTOS — protocolo: ${d.totalEst}  ·  Gestor Mapeado: ${r.criticas[3].esperado}`, ['CNES','Estabelecimento','Gestor Mapeado','Situação'], r.ests.map(e=>[e.cnes,e.nome,e.gestor,ST[e.st][1]]));
+    if (!r.ok && y < H-40){ y += 6; doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(100,116,139);
+      doc.text(doc.splitTextToSize('Após as correções, gerar nova exportação COMPLETA no SCNES (destino Município P. Gestão) e reenviar a base (.bck) com o protocolo (.qrp) pelo Transmissor DID.', W-24), 12, y); }
+  });
+  const n = doc.getNumberOfPages(), stamp = new Date().toLocaleString('pt-BR');
+  for (let i=1;i<=n;i++){ doc.setPage(i); doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(100,116,139);
+    doc.text(`DID · Diretoria de Inteligência de Dados — SEMSA Manaus · emitido em ${stamp}`, 12, H-7); doc.text(`Página ${i} de ${n}`, W-12, H-7, {align:'right'}); }
+  const nm = files.length===1 ? (files[0].data.estabelecimentos[0]?.cnes || 'QRP') + '_' + (findRow(files[0].matchId)?.row.nome || '').replace(/[^A-Z0-9]+/gi,'_') : 'LOTE';
+  doc.save(`CRITICAS_QRP_${state.competencia}_${nm}.pdf`.replace(/_+\.pdf$/,'.pdf'));
+  toast('PDF de críticas gerado');
+}
 
 /* ================= INÍCIO ================= */
 state = load();
