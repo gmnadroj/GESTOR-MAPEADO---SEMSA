@@ -128,7 +128,20 @@ tfoot input:focus{border-color:#fff;background:rgba(255,255,255,.22)}
 .qlist{margin-top:18px;display:flex;flex-direction:column;gap:18px}
 .qcard{background:#fff;border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:18px 20px;box-shadow:0 2px 6px rgba(0,0,0,.04)}
 .qcard.bad{border-left-color:var(--red)}
-.qhead{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:flex-start}
+.qhead{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.qcard{padding:12px 16px}
+.qcard.open{padding:16px 20px}
+.qtoggle{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:none;border:none;padding:4px 2px;cursor:pointer;text-align:left;font:inherit;flex:1;min-width:0}
+.qtoggle:hover .qest{color:var(--sky-d);text-decoration:underline}
+.qtoggle .qest{margin:0;font-size:15.5px}
+.chev{display:inline-block;color:var(--muted);font-size:14px;transition:transform .2s;width:12px}
+.qcard.open .chev{transform:rotate(90deg)}
+.qstatus{padding:5px 14px;border-radius:9999px;font-weight:900;font-size:12px;letter-spacing:1px}
+.qstatus.good{background:var(--green);color:#fff}.qstatus.bad{background:var(--red);color:#fff}
+.qcount{font-size:12px;color:var(--muted);font-weight:600}
+.qacts{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.btn-sm{padding:6px 14px;font-size:12px}
+.qbody{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 .qfile{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.3px;word-break:break-all}
 .qest{font-size:17px;font-weight:800;color:var(--ink);margin-top:3px}
 .qtab{font-size:10.5px;background:#e0f2fe;color:var(--navy2);padding:3px 9px;border-radius:9999px;vertical-align:middle;margin-left:6px}
@@ -789,20 +802,28 @@ function renderQrp(){
     if (f.erro) return `<div class="qcard bad"><div class="qhead"><div><div class="qfile">${esc(f.nome)}</div><div class="qest">${esc(f.erro)}</div></div>
       <button class="del" data-qrm="${f.id}" title="Remover">🗑</button></div></div>`;
     const d = f.data, r = analisar(f);
-    return `<div class="qcard ${r.ok?'good':'bad'}">
+    const nomeEst = r.x ? r.x.row.nome : (d.estabelecimentos[0]?.nome || 'Estabelecimento não identificado');
+    return `<div class="qcard ${r.ok?'good':'bad'}${f.open?' open':''}">
       <div class="qhead">
-        <div>
-          <div class="qfile">${esc(f.nome)}</div>
-          <div class="qest">${r.x ? esc(r.x.row.nome)+' <span class="qtab">'+esc(r.x.tab.nome)+'</span>' : 'Estabelecimento não identificado'}</div>
-          <div class="qmeta">Gerado em ${esc(d.geracao||'-')} · ${esc(d.municipio||'-')} · Origem: ${esc(d.origem||'-')}</div>
+        <button class="qtoggle" data-qopen="${f.id}" aria-expanded="${!!f.open}" title="${f.open?'Ocultar':'Exibir'} análise">
+          <span class="chev">▸</span>
+          <span class="qest">${esc(nomeEst)}</span>
+          <span class="qstatus ${r.ok?'good':'bad'}">${r.ok?'✔ VALIDADO':'✖ REJEITADO'}</span>
+          ${r.x ? `<span class="qtab">${esc(r.x.tab.nome)}</span>` : ''}
+          ${!r.ok ? `<span class="qcount">${r.nCrit} crítica(s) · ${r.apont.length} apontamento(s)</span>` : ''}
+        </button>
+        <div class="qacts">
+          <button class="btn btn-ghost btn-sm" data-qpdf="${f.id}" title="PDF para o estabelecimento">⬇ PDF</button>
+          <button class="del" data-qrm="${f.id}" title="Remover">🗑</button>
         </div>
-        <div class="qbadge ${r.ok?'good':'bad'}">${r.ok?'✔ SEM CRÍTICAS':`✖ ${r.nCrit} CRÍTICA(S)${r.apont.length>r.nCrit?' · '+r.apont.length+' APONTAMENTO(S)':''}`}</div>
       </div>
+      ${f.open ? `<div class="qbody">
+      <div class="qfile">${esc(f.nome)}</div>
+      <div class="qmeta">Gerado em ${esc(d.geracao||'-')} · ${esc(d.municipio||'-')} · Origem: ${esc(d.origem||'-')}</div>
       <div class="qbar">
         <label class="field">Comparar com <select data-qmatch="${f.id}">${rowOptions(f.matchId)}</select></label>
         <span class="sep"></span>
         <button class="btn btn-success" data-qpdf="${f.id}">⬇ PDF para o estabelecimento</button>
-        <button class="btn btn-danger-ghost" data-qrm="${f.id}">Remover</button>
       </div>
       <div class="table-wrap"><table class="qt">
         <thead><tr><th>#</th><th>Crítica do Transmissor DID</th><th>Gestor Mapeado / Parâmetro</th><th>Protocolo (.qrp)</th><th class="num">Situação</th></tr></thead>
@@ -817,7 +838,7 @@ function renderQrp(){
         <div><div class="bloco-title">Estabelecimentos exportados × Gestor Mapeado</div>
           <div class="table-wrap"><table class="qt"><thead><tr><th>CNES</th><th>Estabelecimento</th><th>Gestor Mapeado</th><th>Situação</th></tr></thead>
           <tbody>${r.ests.map(e=>`<tr><td>${esc(e.cnes)}</td><td><b>${esc(e.nome)}</b></td><td>${esc(e.gestor)}</td><td><span class="pill ${ST[e.st][2]}">${ST[e.st][0]} ${ST[e.st][1]}</span></td></tr>`).join('')}</tbody></table></div></div>
-      </div>
+      </div></div>` : ''}
     </div>`;
   }).join('');
   const tot = qrpFiles.filter(f=>!f.erro).map(analisar), ok = tot.filter(r=>r.ok).length;
@@ -829,7 +850,7 @@ function renderQrp(){
       <div class="kpi"><div class="l">Versão SCNES vigente</div><div class="v"><input id="qver" value="${esc(c.versao)}" title="Versão aceita pelo Transmissor"></div></div>
       <div class="kpi"><div class="l">Tipo exigido</div><div class="v sm">Completa</div></div>
       <div class="kpi"><div class="l">Destino exigido</div><div class="v sm">Município P. Gestão</div></div>
-      ${qrpFiles.length?`<div class="kpi main"><div class="l">Protocolos</div><div class="v">${ok}/${qrpFiles.length} <span style="font-size:12px;font-weight:600">sem críticas</span></div></div>`:''}
+      ${qrpFiles.length?`<div class="kpi main"><div class="l">Validados</div><div class="v">${ok}</div></div><div class="kpi main" style="background:#9f1239;border-color:#9f1239"><div class="l" style="color:#fecdd3">Rejeitados</div><div class="v">${qrpFiles.length-ok}</div></div>`:''}
     </div>
     <label class="drop" id="drop">
       <input type="file" id="qrpIn" accept=".qrp,.QRP" multiple hidden>
@@ -837,7 +858,7 @@ function renderQrp(){
       <div><b>Arraste os arquivos .qrp aqui</b> ou clique para selecionar</div>
       <div class="hint">Aceita vários protocolos de uma vez. O estabelecimento é identificado automaticamente pelo nome — confira ou ajuste em “Comparar com”.</div>
     </label>
-    ${qrpFiles.length>1?`<div style="margin:14px 0 0;display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-success" id="qpdfAll">⬇ PDF de todos os protocolos</button><button class="btn btn-danger-ghost" id="qclear">Limpar lista</button></div>`:''}
+    ${qrpFiles.length>1?`<div style="margin:14px 0 0;display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-success" id="qpdfAll">⬇ PDF de todos os protocolos</button><button class="btn btn-ghost" id="qopenAll">Exibir todas as análises</button><button class="btn btn-ghost" id="qcloseAll">Recolher todas</button><button class="btn btn-danger-ghost" id="qclear">Limpar lista</button></div>`:''}
     <div class="qlist">${cards}</div>
   </div>`;
 }
@@ -857,6 +878,8 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('click', e => {
   const rm = e.target.closest('[data-qrm]'); if (rm){ e.preventDefault(); qrpFiles = qrpFiles.filter(f=>f.id!==rm.dataset.qrm); render(); return; }
+  const op = e.target.closest('[data-qopen]'); if (op){ const f = qrpFiles.find(q=>q.id===op.dataset.qopen); f.open = !f.open; render(); return; }
+  if (e.target.id==='qopenAll' || e.target.id==='qcloseAll'){ const v = e.target.id==='qopenAll'; qrpFiles.forEach(f=>f.open=v); render(); return; }
   const pd = e.target.closest('[data-qpdf]'); if (pd){ const f = qrpFiles.find(q=>q.id===pd.dataset.qpdf); qrpPDF([f]); return; }
   if (e.target.id==='qpdfAll') qrpPDF(qrpFiles.filter(f=>!f.erro));
   if (e.target.id==='qclear'){ qrpFiles = []; render(); }
