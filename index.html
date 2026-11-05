@@ -152,6 +152,18 @@ tfoot input:focus{border-color:#fff;background:rgba(255,255,255,.22)}
 .qfilters select{padding:8px 12px;border:1px solid var(--line2);border-radius:9999px;font-size:13px;background:#fff;color:var(--ink);font-weight:600}
 .qfilters .search{min-width:220px}
 .qfilters .sep{flex:1}
+.qstage{margin-top:16px;background:#fff;border:2px solid var(--sky);border-radius:14px;padding:16px 18px;box-shadow:0 6px 18px rgba(29,161,242,.12)}
+.qstage-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.qstage h4{margin:0 0 4px;font-size:14px;text-transform:uppercase;letter-spacing:.4px;color:var(--navy2)}
+.stlist{margin-top:10px;max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.strow{display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding:8px 12px;border-bottom:1px solid #eef2f7;cursor:pointer;font-size:13px}
+.strow:last-child{border-bottom:none}
+.strow:hover{background:#f3faff}.strow.on{background:#e8f5fd}
+.strow input{width:17px;height:17px;accent-color:var(--sky);cursor:pointer;margin:0}
+.stname{font-weight:700;color:var(--ink)}
+.qstage .qfilters{border:none;padding:0;background:none}
+.qstage-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.qstage-foot .sep{flex:1}
 .apont.aviso{background:#fffbeb;border-color:#fde68a}.apont.aviso h4{color:#92400e}
 .apont ul{margin:0;padding-left:20px}
 .qbody{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
@@ -935,11 +947,12 @@ function renderQrp(){
       <input type="file" id="qrpIn" accept=".qrp,.QRP" multiple hidden>
       <input type="file" id="qrpDir" webkitdirectory directory multiple hidden>
       <div class="drop-ic">⇪</div>
-      <div><b>Arraste aqui as pastas dos envios</b> (ou a pasta da competência inteira, ex.: 09.2026)</div>
-      <div class="drop-btns"><button class="btn" id="qPickDir">📁 Selecionar pasta</button><button class="btn btn-ghost" id="qPickFiles">📄 Selecionar arquivos .qrp</button></div>
+      <div><b>Selecione a pasta da competência</b> (ex.: 09.2026) para escolher as pastas de envio — ou arraste pastas para cá</div>
+      <div class="drop-btns"><button class="btn" id="qPickDir">📁 Selecionar pasta(s)</button><button class="btn btn-ghost" id="qPickFiles">📄 Selecionar arquivos .qrp</button></div>
       <div class="hint">Cada pasta é um envio: o sistema lê o .qrp, confere o .bck e identifica distrito, ID do transmissor, estabelecimento e tipo (final/prévia) pelo nome da pasta. Os arquivos são lidos apenas neste computador — nada é enviado para a internet.</div>
     </div>
     <div id="qprog" class="hint" style="margin-top:8px"></div>
+    ${renderStage()}
     ${qrpFiles.length?`<div class="qfilters">
       <input class="search" id="qq" type="search" placeholder="Buscar ID, estabelecimento, CNES…" value="${esc(qf.q)}">
       <select id="qfd"><option value="">Todos os distritos</option>${dists.map(x=>`<option${qf.dist===x?' selected':''}>${esc(x)}</option>`).join('')}</select>
@@ -956,7 +969,7 @@ function renderQrp(){
 }
 
 /* --- carga: arquivos soltos ou pastas (cada pasta = um envio) --- */
-function addQrpEntries(entries){   // entries: [{file, path}]
+function groupEntries(entries){   // entries: [{file, path}] -> grupos por pasta
   const dirs = new Map();
   entries.forEach(({file, path}) => {
     const parts = (path || file.name).split('/').filter(Boolean); parts.pop();
@@ -965,11 +978,15 @@ function addQrpEntries(entries){   // entries: [{file, path}]
     if (/\.qrp$/i.test(file.name)) dirs.get(dir).qrps.push(file);
     else if (/\.bck$/i.test(file.name)) dirs.get(dir).bcks.push(file.name);
   });
+  return [...dirs.values()].filter(g => g.qrps.length || (g.dir && g.bcks.length))
+    .map(g => Object.assign(g, {pasta: g.dir ? parsePasta(g.nome) : null}));
+}
+function analyzeGroups(groups){
   const jobs = [], vistos = new Set(qrpFiles.map(f => f.chave));
-  dirs.forEach(g => {
-    const porPasta = !!g.dir, pasta = porPasta ? parsePasta(g.nome) : null;
+  groups.forEach(g => {
+    const porPasta = !!g.dir, pasta = g.pasta;
     if (!g.qrps.length){
-      if (porPasta && g.bcks.length && !vistos.has(g.dir+'/')) jobs.push(Promise.resolve({id:uid(), chave:g.dir+'/', nome:'(sem .qrp)', pasta, porPasta, bcks:g.bcks, erro:'Pasta sem protocolo .qrp — reenviar o protocolo de exportação junto com a base.'}));
+      if (!vistos.has(g.dir+'/')) jobs.push(Promise.resolve({id:uid(), chave:g.dir+'/', nome:'(sem .qrp)', pasta, porPasta, bcks:g.bcks, erro:'Pasta sem protocolo .qrp — reenviar o protocolo de exportação junto com a base.'}));
       return;
     }
     g.qrps.forEach(file => {
@@ -981,10 +998,95 @@ function addQrpEntries(entries){   // entries: [{file, path}]
       }));
     });
   });
-  if (!jobs.length){ toast(entries.length ? 'Nenhum envio novo (.qrp) encontrado' : 'Nada selecionado'); return; }
+  if (!jobs.length){ toast('Esses envios já estão na lista'); return; }
   $('#qprog') && ($('#qprog').textContent = `Lendo ${jobs.length} protocolo(s)…`);
   Promise.all(jobs).then(arr => { qrpFiles = qrpFiles.concat(arr); render(); toast(`${arr.length} envio(s) analisado(s)`); });
 }
+/* seleção de pastas: com mais de uma pasta de envio, abre a lista para marcar */
+let qStage = null;   // {groups:[...], f:{q,dist,envio}}
+function addQrpEntries(entries){
+  const groups = groupEntries(entries);
+  if (!groups.length){ toast('Nenhum arquivo .qrp ou .bck encontrado'); return; }
+  const loose = groups.filter(g => !g.dir), folders = groups.filter(g => g.dir);
+  if (loose.length) analyzeGroups(loose);
+  if (folders.length === 1 && !qStage) { analyzeGroups(folders); return; }
+  if (!folders.length) return;
+  const carregadas = new Set(qrpFiles.map(f => f.chave.replace(/\/[^/]*$/,'')));
+  if (!qStage) qStage = {groups:[], f:{q:'', dist:'', envio:''}};
+  const ja = new Set(qStage.groups.map(g => g.dir));
+  folders.forEach(g => { if (ja.has(g.dir)) return; g.loaded = carregadas.has(g.dir); g.checked = false; qStage.groups.push(g); });
+  qStage.groups.sort((a,b) => (a.pasta?.distrito||'ZZZ').localeCompare(b.pasta?.distrito||'ZZZ') || (+a.pasta?.id||1e9)-(+b.pasta?.id||1e9) || a.nome.localeCompare(b.nome));
+  render();
+  document.getElementById('qstage')?.scrollIntoView({behavior:'smooth', block:'start'});
+}
+function stageVisible(){
+  const f = qStage.f;
+  return qStage.groups.filter(g => {
+    if (f.dist && (g.pasta?.distrito||'') !== f.dist) return false;
+    if (f.envio && (g.pasta?.envio||'') !== f.envio) return false;
+    if (f.q && !norm(g.nome).includes(norm(f.q))) return false;
+    return true;
+  });
+}
+function renderStage(){
+  if (!qStage) return '';
+  const vis = stageVisible(), sel = qStage.groups.filter(g => g.checked).length;
+  const dists = [...new Set(qStage.groups.map(g => g.pasta?.distrito).filter(Boolean))].sort();
+  const allVisChecked = vis.length && vis.every(g => g.checked);
+  return `<div class="qstage" id="qstage">
+    <div class="qstage-head">
+      <div><h4>Selecione as pastas de envio para analisar</h4>
+        <div class="hint">${qStage.groups.length} pasta(s) encontrada(s). Marque quantas quiser — use “Adicionar outra pasta” para juntar pastas de outros locais.</div></div>
+      <button class="btn btn-ghost btn-sm" id="stAdd">📁 Adicionar outra pasta</button>
+    </div>
+    <div class="qfilters" style="margin-top:10px">
+      <input class="search" id="stq" type="search" placeholder="Buscar pasta (ID, estabelecimento…)" value="${esc(qStage.f.q)}">
+      <select id="std"><option value="">Todos os distritos</option>${dists.map(x=>`<option${qStage.f.dist===x?' selected':''}>${esc(x)}</option>`).join('')}</select>
+      <select id="ste"><option value="">Final e prévia</option><option value="FINAL"${qStage.f.envio==='FINAL'?' selected':''}>Somente FINAL</option><option value="PRÉVIA"${qStage.f.envio==='PRÉVIA'?' selected':''}>Somente PRÉVIA</option></select>
+      <button class="btn btn-ghost btn-sm" id="stAll">${allVisChecked?'Desmarcar':'Marcar'} todas as exibidas (${vis.length})</button>
+      <button class="btn btn-ghost btn-sm" id="stLast" title="Marca apenas o envio mais recente de cada estabelecimento">Marcar último envio de cada estabelecimento</button>
+      <button class="btn btn-ghost btn-sm" id="stNone">Limpar marcação</button>
+    </div>
+    <div class="stlist">${vis.map(g => { const i = qStage.groups.indexOf(g), p = g.pasta || {};
+      return `<label class="strow${g.checked?' on':''}">
+        <input type="checkbox" data-st="${i}"${g.checked?' checked':''}>
+        ${p.padrao ? `<span class="qdist">${esc(p.distrito)}</span><span class="qid">ID ${esc(p.id)}</span>` : `<span class="qdist muted">PASTA</span>`}
+        <span class="stname">${esc(p.padrao ? p.nome : g.nome)}</span>
+        ${p.padrao ? `<span class="qenvio ${p.envio==='FINAL'?'final':'previa'}">${p.envio}</span>` : ''}
+        <span class="qcount">${p.data ? esc(p.data)+' · ' : ''}${g.qrps.length} .qrp · ${g.bcks.length} .bck</span>
+        ${!g.qrps.length ? '<span class="pill bad">sem .qrp</span>' : ''}
+        ${g.loaded ? '<span class="pill muted">já analisada</span>' : ''}
+      </label>`; }).join('') || '<div class="empty">Nenhuma pasta para os filtros.</div>'}</div>
+    <div class="qstage-foot">
+      <button class="btn btn-danger-ghost" id="stCancel">Cancelar</button>
+      <span class="sep"></span>
+      <span class="qcount">${sel} pasta(s) selecionada(s)</span>
+      <button class="btn btn-success" id="stGo"${sel?'':' disabled style="opacity:.5;cursor:not-allowed"'}>⇪ Analisar ${sel} pasta(s)</button>
+    </div>
+  </div>`;
+}
+document.addEventListener('change', e => {
+  if (!qStage) return;
+  const cb = e.target.closest('[data-st]'); if (cb){ qStage.groups[+cb.dataset.st].checked = cb.checked; render(); return; }
+  if (e.target.id==='std'){ qStage.f.dist = e.target.value; render(); }
+  if (e.target.id==='ste'){ qStage.f.envio = e.target.value; render(); }
+});
+document.addEventListener('input', e => { if (qStage && e.target.id==='stq'){ qStage.f.q = e.target.value; const pos=e.target.selectionStart; render(); const n=$('#stq'); n.focus(); try{n.setSelectionRange(pos,pos);}catch(_){} } });
+document.addEventListener('click', e => {
+  if (!qStage) return;
+  const id = e.target.id;
+  if (id==='stAdd'){ $('#qrpDir').click(); return; }
+  if (id==='stAll'){ const vis = stageVisible(), v = !(vis.length && vis.every(g=>g.checked)); vis.forEach(g => g.checked = v); render(); return; }
+  if (id==='stNone'){ qStage.groups.forEach(g => g.checked = false); render(); return; }
+  if (id==='stLast'){
+    const vis = stageVisible(), last = {};
+    vis.forEach(g => { const k = estKey(g.pasta?.padrao ? g.pasta.nome : g.nome), o = g.pasta?.ord || '';
+      if (!last[k] || o > (last[k].pasta?.ord || '')) last[k] = g; });
+    const keep = new Set(Object.values(last)); vis.forEach(g => g.checked = keep.has(g)); render(); return;
+  }
+  if (id==='stCancel'){ qStage = null; render(); return; }
+  if (id==='stGo'){ const sel = qStage.groups.filter(g => g.checked); if (!sel.length) return; qStage = null; analyzeGroups(sel); }
+});
 function readEntryTree(entry, path, out){
   return new Promise(res => {
     if (entry.isFile){ entry.file(f => { out.push({file:f, path: path + f.name}); res(); }, () => res()); }
