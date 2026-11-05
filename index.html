@@ -141,6 +141,19 @@ tfoot input:focus{border-color:#fff;background:rgba(255,255,255,.22)}
 .qcount{font-size:12px;color:var(--muted);font-weight:600}
 .qacts{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .btn-sm{padding:6px 14px;font-size:12px}
+.qdist{background:var(--navy2);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.8px;padding:4px 9px;border-radius:6px}
+.qdist.muted{background:#94a3b8}
+.qid{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;font-weight:800;color:var(--navy2);background:#e0f2fe;padding:3px 9px;border-radius:6px}
+.qenvio{font-size:10.5px;font-weight:800;letter-spacing:.8px;padding:3px 9px;border-radius:6px;border:1.5px solid}
+.qenvio.final{color:#1d4ed8;border-color:#93c5fd;background:#eff6ff}.qenvio.previa{color:#92400e;border-color:#fcd34d;background:#fffbeb}
+.drop{cursor:default}
+.drop-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:6px 0 2px}
+.qfilters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.qfilters select{padding:8px 12px;border:1px solid var(--line2);border-radius:9999px;font-size:13px;background:#fff;color:var(--ink);font-weight:600}
+.qfilters .search{min-width:220px}
+.qfilters .sep{flex:1}
+.apont.aviso{background:#fffbeb;border-color:#fde68a}.apont.aviso h4{color:#92400e}
+.apont ul{margin:0;padding-left:20px}
 .qbody{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 .qfile{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.3px;word-break:break-all}
 .qest{font-size:17px;font-weight:800;color:var(--ink);margin-top:3px}
@@ -694,25 +707,41 @@ function allRows(){
   return out;
 }
 function findRow(id){ return allRows().find(x => x.row.id === id); }
-function autoMatch(d){
+/* --- pasta do envio: DISTRITO-ID_NNNN-ESTABELECIMENTO-final|previa-DDMMAAAAHHMMSS --- */
+const DIST_TABS = {LESTE:['leste'], NORTE:['norte'], SUL:['sul'], OESTE:['oeste','centr','mmt'], RURAL:['centr'], CENTRAL:['samu','mmt','centr'], PRISIONAIS:['prisionais']};
+function parsePasta(nome){
+  const m = String(nome).trim().match(/^([A-Za-zÀ-ÿ ]+?)\s*-\s*ID[\s_-]*(\d+)\s*-\s*(.+?)\s*-\s*(pr[eé]via|final)\s*(?:-\s*(\d{8,14}))?\s*$/i);
+  if (!m) return {padrao:false, raw:nome, nome:String(nome).trim()};
+  let data = null;
+  if (m[5] && m[5].length>=8){ const t=m[5]; data = `${t.slice(0,2)}/${t.slice(2,4)}/${t.slice(4,8)}` + (t.length>=12 ? ` ${t.slice(8,10)}:${t.slice(10,12)}` : ''); }
+  const ord = m[5] ? m[5].slice(4,8)+m[5].slice(2,4)+m[5].slice(0,2)+m[5].slice(8) : '';
+  return {padrao:true, raw:nome, distrito:norm(m[1]).trim(), id:m[2], nome:m[3].trim(), envio: /final/i.test(m[4]) ? 'FINAL' : 'PRÉVIA', data, ord};
+}
+function autoMatch(d, pasta){
   const rows = allRows(); let best=null, score=0;
-  d.estabelecimentos.forEach(e => {
-    const ek = estKey(e.nome), et = new Set(norm(e.nome).split(/\W+/).filter(w=>w.length>2 && w!=='USF'));
+  const pref = pasta && pasta.padrao ? (DIST_TABS[pasta.distrito] || []) : [];
+  const nomes = [];
+  if (pasta && pasta.nome) nomes.push({nome:pasta.nome, peso:1.05});
+  d.estabelecimentos.forEach(e => nomes.push({nome:e.nome, peso:1}));
+  nomes.forEach(({nome, peso}) => {
+    const ek = estKey(nome), et = new Set(norm(nome).split(/\W+/).filter(w=>w.length>2 && w!=='USF'));
     rows.forEach(x => {
       const rk = estKey(x.row.nome); let sc = 0;
       if (rk === ek) sc = 100;
-      else if (ek.length>4 && (rk.startsWith(ek) || rk.includes(ek))) sc = 80;
+      else if (ek.length>4 && (rk.startsWith(ek) || rk.includes(ek) || ek.startsWith(rk))) sc = 80;
       else { const rt = new Set(norm(x.row.nome).split(/\W+/).filter(w=>w.length>2 && w!=='USF')); const inter=[...et].filter(w=>rt.has(w)).length; const uni=new Set([...et,...rt]).size; sc = uni? 70*inter/uni : 0; }
+      sc *= peso; if (pref.includes(x.tab.id)) sc += 8;
       if (sc > score){ score = sc; best = x; }
     });
   });
-  return score >= 35 ? best.row.id : null;
+  return score >= 40 ? best.row.id : null;
 }
+const bckKey = s => String(s||'').trim().toLowerCase().replace(/\.bck$/,'').replace(/_ok$/,'');
 
 /* --- análise das críticas --- */
 function analisar(f){
   const d = f.data, c = cfg(), x = f.matchId ? findRow(f.matchId) : null;
-  const res = {criticas:[], apont:[], equipes:[], ests:[], x};
+  const res = {criticas:[], apont:[], avisos:[], equipes:[], ests:[], x};
   let espEq=null, espEas=null;
   if (x){
     if (x.bloco && x.base){ const t = blocoTotals(x.bloco); espEq=t.eq; espEas=t.eas; }
@@ -737,6 +766,20 @@ function analisar(f){
     `O protocolo exportou ${d.totalEq} equipe(s), mas o Gestor Mapeado prevê ${espEq} (Qtde. Equipes). Conferir no SCNES as equipes ausentes/excedentes (detalhamento abaixo).`);
   add(6,'Destino', 'Município P. Gestão', d.destino||'não informado', norm(d.destino).replace(/\s+/g,' ')==='MUNICIPIO P. GESTAO',
     `Destino da exportação "${d.destino||'-'}". Refazer a exportação com destino "Município P. Gestão".`);
+  if (f.porPasta){
+    const alvo = bckKey(d.arquivo), bs = f.bcks || [];
+    const igual = bs.find(b => bckKey(b) === alvo);
+    add(7,'Arquivo de base (.bck)', d.arquivo || 'informado no protocolo', bs.length ? bs.join(', ') : 'ausente na pasta', !!igual && !!alvo,
+      !bs.length ? `A pasta do envio não contém o arquivo de base (.bck). Reenviar a base ${d.arquivo||''} junto com o protocolo pelo Transmissor.` :
+      !igual ? `A base enviada (${bs.join(', ')}) não corresponde ao arquivo citado no protocolo (${d.arquivo||'-'}). Reenviar a base e o protocolo da MESMA exportação.` : null);
+    if (igual && bs.length > 1) res.avisos.push(`A pasta contém ${bs.length} arquivos .bck; apenas ${igual} corresponde ao protocolo.`);
+    if ((f.qrpsNaPasta||1) > 1) res.avisos.push(`A pasta contém ${f.qrpsNaPasta} protocolos .qrp — cada um foi analisado separadamente.`);
+  }
+  if (f.pasta && f.pasta.padrao){
+    const pref = DIST_TABS[f.pasta.distrito];
+    if (x && pref && !pref.includes(x.tab.id)) res.avisos.push(`Envio feito pelo distrito ${f.pasta.distrito}, mas o estabelecimento está mapeado em ${x.tab.nome}.`);
+    if (f.pasta.envio === 'PRÉVIA') res.avisos.push('Envio do tipo PRÉVIA — aguardar o envio FINAL para o fechamento da competência.');
+  } else if (f.porPasta) res.avisos.push(`Nome da pasta fora do padrão do Transmissor (DISTRITO-ID_NNNN-ESTABELECIMENTO-final/previa-DATA): "${f.pasta?.raw||''}".`);
   if (d.equipes.length !== d.totalEq) res.apont.push(`Inconsistência interna do protocolo: ${d.equipes.length} equipe(s) listada(s) e TOTAL informado ${d.totalEq}.`);
 
   // detalhamento: equipes
@@ -796,21 +839,54 @@ function rowOptions(sel){
   return `<option value="">— selecione o estabelecimento —</option>` + Object.entries(groups).map(([g,xs]) =>
     `<optgroup label="${esc(g)}">${xs.map(x=>`<option value="${x.row.id}"${x.row.id===sel?' selected':''}>${esc(x.row.nome)}${x.bloco&&x.base?' (base centralizada)':''}</option>`).join('')}</optgroup>`).join('');
 }
+let qf = {q:'', dist:'', envio:'', st:''};
+const qName = (f, r) => (f.pasta && f.pasta.nome) || (r && r.x ? r.x.row.nome : (f.data?.estabelecimentos[0]?.nome || f.nome));
+function qIdent(f){
+  const p = f.pasta;
+  if (!p) return '';
+  if (!p.padrao) return `<span class="qdist muted">PASTA</span>`;
+  return `<span class="qdist">${esc(p.distrito)}</span><span class="qid">ID ${esc(p.id)}</span>`;
+}
+function qEnvio(f){ const p=f.pasta; return p && p.padrao ? `<span class="qenvio ${p.envio==='FINAL'?'final':'previa'}">${p.envio}</span>` : ''; }
+function qSorted(){
+  return qrpFiles.slice().sort((a,b) => {
+    const pa=a.pasta||{}, pb=b.pasta||{};
+    return (pa.distrito||'ZZZ').localeCompare(pb.distrito||'ZZZ') || (+pa.id||1e9)-(+pb.id||1e9) || a.nome.localeCompare(b.nome);
+  });
+}
+function qVisible(list){
+  let out = list;
+  if (qf.envio==='ULTIMO'){
+    const last = {};
+    list.forEach(f => { const k = (f.matchId || estKey(qName(f))) ; const o = (f.pasta&&f.pasta.ord)||''; if (!last[k] || o > ((last[k].pasta&&last[k].pasta.ord)||'')) last[k]=f; });
+    const keep = new Set(Object.values(last)); out = out.filter(f => keep.has(f));
+  }
+  return out.filter(f => {
+    if (qf.dist && (f.pasta?.distrito||'') !== qf.dist) return false;
+    if (qf.envio==='FINAL' || qf.envio==='PRÉVIA') if ((f.pasta?.envio||'') !== qf.envio) return false;
+    if (qf.st){ const ok = !f.erro && analisar(f).ok; if (qf.st==='V' && !ok) return false; if (qf.st==='R' && ok) return false; }
+    if (qf.q){ const q = norm(qf.q); const hay = norm([f.nome, f.pasta?.raw, f.pasta?.id, qName(f), f.data?.arquivo, ...(f.data?.estabelecimentos||[]).map(e=>e.cnes+' '+e.nome)].join(' ')); if (!hay.includes(q)) return false; }
+    return true;
+  });
+}
 function renderQrp(){
   const c = cfg();
-  const cards = qrpFiles.map(f => {
-    if (f.erro) return `<div class="qcard bad"><div class="qhead"><div><div class="qfile">${esc(f.nome)}</div><div class="qest">${esc(f.erro)}</div></div>
-      <button class="del" data-qrm="${f.id}" title="Remover">🗑</button></div></div>`;
+  const vis = qVisible(qSorted());
+  const cards = vis.map(f => {
+    if (f.erro) return `<div class="qcard bad"><div class="qhead"><div class="qtoggle" style="cursor:default">${qIdent(f)}<span class="qest">${esc(qName(f))}</span>${qEnvio(f)}<span class="qstatus bad">✖ REJEITADO</span><span class="qcount">${esc(f.erro)}</span></div>
+      <div class="qacts"><button class="del" data-qrm="${f.id}" title="Remover">🗑</button></div></div></div>`;
     const d = f.data, r = analisar(f);
-    const nomeEst = r.x ? r.x.row.nome : (d.estabelecimentos[0]?.nome || 'Estabelecimento não identificado');
+    const gestNome = r.x ? r.x.row.nome : null;
     return `<div class="qcard ${r.ok?'good':'bad'}${f.open?' open':''}">
       <div class="qhead">
         <button class="qtoggle" data-qopen="${f.id}" aria-expanded="${!!f.open}" title="${f.open?'Ocultar':'Exibir'} análise">
           <span class="chev">▸</span>
-          <span class="qest">${esc(nomeEst)}</span>
+          ${qIdent(f)}
+          <span class="qest">${esc(qName(f, r))}</span>
+          ${qEnvio(f)}
           <span class="qstatus ${r.ok?'good':'bad'}">${r.ok?'✔ VALIDADO':'✖ REJEITADO'}</span>
-          ${r.x ? `<span class="qtab">${esc(r.x.tab.nome)}</span>` : ''}
           ${!r.ok ? `<span class="qcount">${r.nCrit} crítica(s) · ${r.apont.length} apontamento(s)</span>` : ''}
+          ${f.pasta?.data ? `<span class="qcount">enviado ${esc(f.pasta.data)}</span>` : ''}
         </button>
         <div class="qacts">
           <button class="btn btn-ghost btn-sm" data-qpdf="${f.id}" title="PDF para o estabelecimento">⬇ PDF</button>
@@ -818,19 +894,21 @@ function renderQrp(){
         </div>
       </div>
       ${f.open ? `<div class="qbody">
-      <div class="qfile">${esc(f.nome)}</div>
-      <div class="qmeta">Gerado em ${esc(d.geracao||'-')} · ${esc(d.municipio||'-')} · Origem: ${esc(d.origem||'-')}</div>
+      ${f.pasta ? `<div class="qfile">📁 ${esc(f.pasta.raw)}</div>` : ''}
+      <div class="qfile">📄 ${esc(f.nome)}${f.porPasta ? ` · 🗄 ${f.bcks.length ? esc(f.bcks.join(', ')) : 'sem .bck'}` : ''}</div>
+      <div class="qmeta">Gerado em ${esc(d.geracao||'-')} · ${esc(d.municipio||'-')} · Origem: ${esc(d.origem||'-')}${gestNome ? ` · Gestor Mapeado: <b>${esc(gestNome)}</b> (${esc(r.x.tab.nome)})` : ''}</div>
       <div class="qbar">
         <label class="field">Comparar com <select data-qmatch="${f.id}">${rowOptions(f.matchId)}</select></label>
         <span class="sep"></span>
         <button class="btn btn-success" data-qpdf="${f.id}">⬇ PDF para o estabelecimento</button>
       </div>
       <div class="table-wrap"><table class="qt">
-        <thead><tr><th>#</th><th>Crítica do Transmissor DID</th><th>Gestor Mapeado / Parâmetro</th><th>Protocolo (.qrp)</th><th class="num">Situação</th></tr></thead>
+        <thead><tr><th>#</th><th>Crítica do Transmissor DID</th><th>Gestor Mapeado / Parâmetro</th><th>Protocolo / Envio</th><th class="num">Situação</th></tr></thead>
         <tbody>${r.criticas.map(k=>`<tr><td>${k.n}</td><td><b>${k.nome}</b></td><td>${esc(k.esperado)}</td><td>${esc(k.obtido)}</td>
           <td class="num"><span class="pill ${k.ok?'ok':'bad'}">${k.ok?'✔ OK':'✖ CRÍTICA'}</span></td></tr>`).join('')}</tbody>
       </table></div>
       ${r.apont.length ? `<div class="apont"><h4>Apontamentos para correção</h4><ol>${r.apont.map(a=>`<li>${esc(a)}</li>`).join('')}</ol></div>` : `<div class="apont good"><h4>Nenhuma correção necessária</h4>O protocolo está de acordo com o Gestor Mapeado e com as críticas do Transmissor DID.</div>`}
+      ${r.avisos.length ? `<div class="apont aviso"><h4>Observações (não bloqueiam a validação)</h4><ul>${r.avisos.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div>` : ''}
       <div class="qgrid">
         <div><div class="bloco-title">Equipes exportadas × Gestor Mapeado</div>
           <div class="table-wrap"><table class="qt"><thead><tr><th>Equipe</th><th>CNES - Área</th><th>Tipo</th><th>Gestor Mapeado</th><th>Situação</th></tr></thead>
@@ -841,52 +919,112 @@ function renderQrp(){
       </div></div>` : ''}
     </div>`;
   }).join('');
-  const tot = qrpFiles.filter(f=>!f.erro).map(analisar), ok = tot.filter(r=>r.ok).length;
+  const all = qrpFiles.map(f => !f.erro && analisar(f).ok), ok = all.filter(Boolean).length;
+  const dists = [...new Set(qrpFiles.map(f=>f.pasta?.distrito).filter(Boolean))].sort();
   return `<div class="section">
     <div class="section-head"><div><h3>Validação de Protocolos QRP — Transmissor DID</h3>
-      <div class="sub">Compara o protocolo de exportação (.qrp) enviado com a base (.bck) com o Gestor Mapeado da competência ${fmtComp(state.competencia)}</div></div></div>
+      <div class="sub">Compara o protocolo de exportação (.qrp) e a base (.bck) de cada envio com o Gestor Mapeado da competência ${fmtComp(state.competencia)}</div></div></div>
     <div class="qparams">
       <div class="kpi"><div class="l">Competência ativa</div><div class="v">${fmtComp(state.competencia)}</div></div>
       <div class="kpi"><div class="l">Versão SCNES vigente</div><div class="v"><input id="qver" value="${esc(c.versao)}" title="Versão aceita pelo Transmissor"></div></div>
       <div class="kpi"><div class="l">Tipo exigido</div><div class="v sm">Completa</div></div>
       <div class="kpi"><div class="l">Destino exigido</div><div class="v sm">Município P. Gestão</div></div>
-      ${qrpFiles.length?`<div class="kpi main"><div class="l">Validados</div><div class="v">${ok}</div></div><div class="kpi main" style="background:#9f1239;border-color:#9f1239"><div class="l" style="color:#fecdd3">Rejeitados</div><div class="v">${qrpFiles.length-ok}</div></div>`:''}
+      ${qrpFiles.length?`<div class="kpi"><div class="l">Envios</div><div class="v">${qrpFiles.length}</div></div><div class="kpi main"><div class="l">Validados</div><div class="v">${ok}</div></div><div class="kpi main" style="background:#9f1239;border-color:#9f1239"><div class="l" style="color:#fecdd3">Rejeitados</div><div class="v">${qrpFiles.length-ok}</div></div>`:''}
     </div>
-    <label class="drop" id="drop">
+    <div class="drop" id="drop">
       <input type="file" id="qrpIn" accept=".qrp,.QRP" multiple hidden>
+      <input type="file" id="qrpDir" webkitdirectory directory multiple hidden>
       <div class="drop-ic">⇪</div>
-      <div><b>Arraste os arquivos .qrp aqui</b> ou clique para selecionar</div>
-      <div class="hint">Aceita vários protocolos de uma vez. O estabelecimento é identificado automaticamente pelo nome — confira ou ajuste em “Comparar com”.</div>
-    </label>
-    ${qrpFiles.length>1?`<div style="margin:14px 0 0;display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-success" id="qpdfAll">⬇ PDF de todos os protocolos</button><button class="btn btn-ghost" id="qopenAll">Exibir todas as análises</button><button class="btn btn-ghost" id="qcloseAll">Recolher todas</button><button class="btn btn-danger-ghost" id="qclear">Limpar lista</button></div>`:''}
-    <div class="qlist">${cards}</div>
+      <div><b>Arraste aqui as pastas dos envios</b> (ou a pasta da competência inteira, ex.: 09.2026)</div>
+      <div class="drop-btns"><button class="btn" id="qPickDir">📁 Selecionar pasta</button><button class="btn btn-ghost" id="qPickFiles">📄 Selecionar arquivos .qrp</button></div>
+      <div class="hint">Cada pasta é um envio: o sistema lê o .qrp, confere o .bck e identifica distrito, ID do transmissor, estabelecimento e tipo (final/prévia) pelo nome da pasta. Os arquivos são lidos apenas neste computador — nada é enviado para a internet.</div>
+    </div>
+    <div id="qprog" class="hint" style="margin-top:8px"></div>
+    ${qrpFiles.length?`<div class="qfilters">
+      <input class="search" id="qq" type="search" placeholder="Buscar ID, estabelecimento, CNES…" value="${esc(qf.q)}">
+      <select id="qfd"><option value="">Todos os distritos</option>${dists.map(x=>`<option${qf.dist===x?' selected':''}>${esc(x)}</option>`).join('')}</select>
+      <select id="qfe"><option value="">Final e prévia</option><option value="FINAL"${qf.envio==='FINAL'?' selected':''}>Somente FINAL</option><option value="PRÉVIA"${qf.envio==='PRÉVIA'?' selected':''}>Somente PRÉVIA</option><option value="ULTIMO"${qf.envio==='ULTIMO'?' selected':''}>Último envio de cada estabelecimento</option></select>
+      <select id="qfs"><option value="">Validados e rejeitados</option><option value="V"${qf.st==='V'?' selected':''}>Somente VALIDADOS</option><option value="R"${qf.st==='R'?' selected':''}>Somente REJEITADOS</option></select>
+      <span class="sep"></span>
+      <span class="qcount">${vis.length} de ${qrpFiles.length}</span>
+      <button class="btn btn-success btn-sm" id="qpdfAll">⬇ PDF dos exibidos</button>
+      <button class="btn btn-ghost btn-sm" id="qopenAll">Exibir análises</button><button class="btn btn-ghost btn-sm" id="qcloseAll">Recolher</button>
+      <button class="btn btn-danger-ghost btn-sm" id="qclear">Limpar lista</button>
+    </div>`:''}
+    <div class="qlist">${cards || (qrpFiles.length ? '<div class="empty">Nenhum envio para os filtros selecionados.</div>' : '')}</div>
   </div>`;
 }
-function addQrpFiles(list){
-  const fs = [...list].filter(f => /\.qrp$/i.test(f.name));
-  if (!fs.length){ toast('Selecione arquivos .qrp'); return; }
-  Promise.all(fs.map(file => file.arrayBuffer().then(buf => {
-    const f = {id:uid(), nome:file.name};
-    try { f.data = parseQRP(buf); f.matchId = autoMatch(f.data); } catch(e){ f.erro = e.message; }
-    return f;
-  }))).then(arr => { qrpFiles = arr.concat(qrpFiles); render(); toast(`${arr.length} protocolo(s) analisado(s)`); });
+
+/* --- carga: arquivos soltos ou pastas (cada pasta = um envio) --- */
+function addQrpEntries(entries){   // entries: [{file, path}]
+  const dirs = new Map();
+  entries.forEach(({file, path}) => {
+    const parts = (path || file.name).split('/').filter(Boolean); parts.pop();
+    const dir = parts.join('/');
+    if (!dirs.has(dir)) dirs.set(dir, {dir, nome: parts[parts.length-1] || '', qrps:[], bcks:[]});
+    if (/\.qrp$/i.test(file.name)) dirs.get(dir).qrps.push(file);
+    else if (/\.bck$/i.test(file.name)) dirs.get(dir).bcks.push(file.name);
+  });
+  const jobs = [], vistos = new Set(qrpFiles.map(f => f.chave));
+  dirs.forEach(g => {
+    const porPasta = !!g.dir, pasta = porPasta ? parsePasta(g.nome) : null;
+    if (!g.qrps.length){
+      if (porPasta && g.bcks.length && !vistos.has(g.dir+'/')) jobs.push(Promise.resolve({id:uid(), chave:g.dir+'/', nome:'(sem .qrp)', pasta, porPasta, bcks:g.bcks, erro:'Pasta sem protocolo .qrp — reenviar o protocolo de exportação junto com a base.'}));
+      return;
+    }
+    g.qrps.forEach(file => {
+      const chave = g.dir + '/' + file.name; if (vistos.has(chave)) return; vistos.add(chave);
+      jobs.push(file.arrayBuffer().then(buf => {
+        const f = {id:uid(), chave, nome:file.name, pasta, porPasta, bcks:g.bcks, qrpsNaPasta:g.qrps.length};
+        try { f.data = parseQRP(buf); f.matchId = autoMatch(f.data, pasta); } catch(e){ f.erro = e.message; }
+        return f;
+      }));
+    });
+  });
+  if (!jobs.length){ toast(entries.length ? 'Nenhum envio novo (.qrp) encontrado' : 'Nada selecionado'); return; }
+  $('#qprog') && ($('#qprog').textContent = `Lendo ${jobs.length} protocolo(s)…`);
+  Promise.all(jobs).then(arr => { qrpFiles = qrpFiles.concat(arr); render(); toast(`${arr.length} envio(s) analisado(s)`); });
+}
+function readEntryTree(entry, path, out){
+  return new Promise(res => {
+    if (entry.isFile){ entry.file(f => { out.push({file:f, path: path + f.name}); res(); }, () => res()); }
+    else if (entry.isDirectory){
+      const rd = entry.createReader(), all = [];
+      const next = () => rd.readEntries(es => { if (!es.length) Promise.all(all.map(e => readEntryTree(e, path + entry.name + '/', out))).then(res); else { all.push(...es); next(); } }, () => res());
+      next();
+    } else res();
+  });
 }
 document.addEventListener('change', e => {
-  if (e.target.id==='qrpIn'){ addQrpFiles(e.target.files); e.target.value=''; }
+  if (e.target.id==='qrpIn'){ addQrpEntries([...e.target.files].map(f=>({file:f, path:f.name}))); e.target.value=''; }
+  if (e.target.id==='qrpDir'){ addQrpEntries([...e.target.files].map(f=>({file:f, path:f.webkitRelativePath || f.name}))); e.target.value=''; }
   if (e.target.matches('[data-qmatch]')){ const f = qrpFiles.find(q=>q.id===e.target.dataset.qmatch); f.matchId = e.target.value||null; f.mainCnes=null; render(); }
   if (e.target.id==='qver'){ const v = e.target.value.trim(); if (/^\d+(\.\d+)*$/.test(v)){ cfg().versao = v; save(); } render(); }
+  if (e.target.id==='qfd'){ qf.dist = e.target.value; render(); }
+  if (e.target.id==='qfe'){ qf.envio = e.target.value; render(); }
+  if (e.target.id==='qfs'){ qf.st = e.target.value; render(); }
 });
+document.addEventListener('input', e => { if (e.target.id==='qq'){ qf.q = e.target.value; const pos = e.target.selectionStart; render(); const n = $('#qq'); n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } });
 document.addEventListener('click', e => {
+  if (e.target.id==='qPickDir'){ $('#qrpDir').click(); return; }
+  if (e.target.id==='qPickFiles'){ $('#qrpIn').click(); return; }
   const rm = e.target.closest('[data-qrm]'); if (rm){ e.preventDefault(); qrpFiles = qrpFiles.filter(f=>f.id!==rm.dataset.qrm); render(); return; }
   const op = e.target.closest('[data-qopen]'); if (op){ const f = qrpFiles.find(q=>q.id===op.dataset.qopen); f.open = !f.open; render(); return; }
-  if (e.target.id==='qopenAll' || e.target.id==='qcloseAll'){ const v = e.target.id==='qopenAll'; qrpFiles.forEach(f=>f.open=v); render(); return; }
+  if (e.target.id==='qopenAll' || e.target.id==='qcloseAll'){ const v = e.target.id==='qopenAll'; qVisible(qrpFiles).forEach(f=>f.open=v); render(); return; }
   const pd = e.target.closest('[data-qpdf]'); if (pd){ const f = qrpFiles.find(q=>q.id===pd.dataset.qpdf); qrpPDF([f]); return; }
-  if (e.target.id==='qpdfAll') qrpPDF(qrpFiles.filter(f=>!f.erro));
-  if (e.target.id==='qclear'){ qrpFiles = []; render(); }
+  if (e.target.id==='qpdfAll'){ const l = qVisible(qSorted()).filter(f=>!f.erro); l.length ? qrpPDF(l) : toast('Nenhum protocolo para exportar'); }
+  if (e.target.id==='qclear'){ if (confirm('Remover todos os envios carregados?')){ qrpFiles = []; render(); } }
 });
 ['dragover','dragenter'].forEach(ev => document.addEventListener(ev, e => { const d = e.target.closest && e.target.closest('#drop'); if (d){ e.preventDefault(); d.classList.add('over'); } }));
 document.addEventListener('dragleave', e => { const d = e.target.closest && e.target.closest('#drop'); if (d) d.classList.remove('over'); });
-document.addEventListener('drop', e => { const d = e.target.closest && e.target.closest('#drop'); if (d){ e.preventDefault(); d.classList.remove('over'); addQrpFiles(e.dataTransfer.files); } });
+document.addEventListener('drop', e => {
+  const d = e.target.closest && e.target.closest('#drop'); if (!d) return;
+  e.preventDefault(); d.classList.remove('over');
+  const items = [...(e.dataTransfer.items||[])].map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+  if (!items.length){ addQrpEntries([...e.dataTransfer.files].map(f=>({file:f, path:f.name}))); return; }
+  const out = []; $('#qprog').textContent = 'Lendo pastas…';
+  Promise.all(items.map(en => readEntryTree(en, '', out))).then(() => addQrpEntries(out));
+});
 
 /* --- PDF de críticas --- */
 function qrpPDF(files){
@@ -907,14 +1045,18 @@ function qrpPDF(files){
     const d = f.data, r = analisar(f);
     let y = 30;
     doc.setTextColor(15,23,42); doc.setFont('helvetica','bold'); doc.setFontSize(12);
-    doc.text(doc.splitTextToSize(r.x ? r.x.row.nome : (d.estabelecimentos[0]?.nome || 'Estabelecimento não identificado'), W-70), 12, y);
-    const st = r.ok ? 'SEM CRÍTICAS' : `${r.nCrit} CRÍTICA(S)`;
+    const tl = doc.splitTextToSize(qName(f, r), W-74); doc.text(tl, 12, y);
+    const st = r.ok ? 'VALIDADO' : 'REJEITADO';
     doc.setFillColor(...(r.ok?colors.ok:colors.bad)); doc.roundedRect(W-58, y-5.5, 46, 8, 4, 4, 'F');
     doc.setTextColor(255); doc.setFontSize(9); doc.text(st, W-35, y-0.3, {align:'center'});
-    y += 6;
+    y += 5*tl.length + 1;
     doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(51,65,85);
-    [ `Distrito: ${r.x ? r.x.tab.nome : '-'}     CNES: ${d.estabelecimentos.map(e=>e.cnes).join(', ')||'-'}`,
-      `Arquivo: ${d.arquivo || f.nome}`,
+    const p = f.pasta;
+    [ ...(p && p.padrao ? [`Distrito de envio: ${p.distrito}     ID do Transmissor: ${p.id}     Envio: ${p.envio}${p.data?'  ('+p.data+')':''}`] : []),
+      ...(p ? [`Pasta: ${p.raw}`] : []),
+      `Gestor Mapeado: ${r.x ? r.x.row.nome+' — '+r.x.tab.nome : 'não vinculado'}     CNES: ${d.estabelecimentos.map(e=>e.cnes).join(', ')||'-'}`,
+      `Base informada no protocolo: ${d.arquivo || '-'}`,
+      ...(f.porPasta ? [`Base (.bck) na pasta: ${f.bcks.join(', ')||'ausente'}`] : []),
       `Gerado em: ${d.geracao||'-'}     Município: ${d.municipio||'-'}     Origem: ${d.origem||'-'}`,
       `Competência ativa no Gestor Mapeado: ${fmtComp(state.competencia)}     Versão SCNES vigente: ${cfg().versao}` ].forEach(l => { doc.text(l, 12, y); y += 4.6; });
     doc.autoTable({
@@ -922,11 +1064,13 @@ function qrpPDF(files){
       head:[['#','Crítica','Gestor Mapeado / Parâmetro','Protocolo (.qrp)','Situação']],
       body: r.criticas.map(k => [k.n, k.nome, String(k.esperado), String(k.obtido), k.ok?'OK':'CRÍTICA']),
       styles:{fontSize:8.5, cellPadding:2, lineColor:[203,213,225], lineWidth:.15, textColor:[15,23,42]},
-      headStyles:{fillColor:[3,75,117], textColor:255}, columnStyles:{0:{cellWidth:8,halign:'center'},1:{fontStyle:'bold'},4:{halign:'center',fontStyle:'bold',cellWidth:24}},
+      headStyles:{fillColor:[3,75,117], textColor:255}, columnStyles:{0:{cellWidth:8,halign:'center'},1:{fontStyle:'bold',cellWidth:40},4:{halign:'center',fontStyle:'bold',cellWidth:24}},
       didParseCell: c => { if (c.section==='body' && c.column.index===4){ c.cell.styles.textColor = c.cell.raw==='OK' ? colors.ok : colors.bad; } },
       didDrawPage: header
     });
     y = doc.lastAutoTable.finalY + 8;
+    if (r.avisos.length){ doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(146,64,14);
+      r.avisos.forEach(a => { const l = doc.splitTextToSize('Obs.: '+a, W-24); doc.text(l, 12, y); y += l.length*4 + 1; }); y += 3; }
     doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(3,75,117);
     doc.text(r.apont.length ? 'APONTAMENTOS PARA CORREÇÃO' : 'NENHUMA CORREÇÃO NECESSÁRIA', 12, y); y += 5;
     doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(15,23,42);
@@ -953,7 +1097,7 @@ function qrpPDF(files){
   const n = doc.getNumberOfPages(), stamp = new Date().toLocaleString('pt-BR');
   for (let i=1;i<=n;i++){ doc.setPage(i); doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(100,116,139);
     doc.text(`DID · Diretoria de Inteligência de Dados — SEMSA Manaus · emitido em ${stamp}`, 12, H-7); doc.text(`Página ${i} de ${n}`, W-12, H-7, {align:'right'}); }
-  const nm = files.length===1 ? (files[0].data.estabelecimentos[0]?.cnes || 'QRP') + '_' + (findRow(files[0].matchId)?.row.nome || '').replace(/[^A-Z0-9]+/gi,'_') : 'LOTE';
+  const f0 = files[0], nm = files.length===1 ? ((f0.pasta && f0.pasta.padrao) ? `${f0.pasta.distrito}_ID${f0.pasta.id}_${f0.pasta.envio==='FINAL'?'FINAL':'PREVIA'}_` : (f0.data.estabelecimentos[0]?.cnes || 'QRP')+'_') + qName(f0).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9]+/gi,'_') : `LOTE_${files.length}_ENVIOS`;
   doc.save(`CRITICAS_QRP_${state.competencia}_${nm}.pdf`.replace(/_+\.pdf$/,'.pdf'));
   toast('PDF de críticas gerado');
 }
