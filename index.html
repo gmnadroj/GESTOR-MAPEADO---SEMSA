@@ -29,6 +29,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 .tab{background:rgba(255,255,255,.08);color:#dbeafe;border:1px solid rgba(255,255,255,.12);border-bottom:none;padding:11px 18px;border-radius:12px 12px 0 0;font-size:13px;font-weight:700;letter-spacing:.6px;cursor:pointer;text-transform:uppercase;transition:.2s;white-space:nowrap}
 .tab:hover{background:rgba(255,255,255,.16);color:#fff}
 .tab[data-tab="qrp"]{background:rgba(16,185,129,.18);border-color:rgba(16,185,129,.45);color:#d1fae5}
+.tab[data-tab="imp"]{background:rgba(29,161,242,.2);border-color:rgba(29,161,242,.5);color:#e0f2fe}
 .tab.active{background:var(--panel);color:var(--navy2);border-color:var(--panel)}
 
 /* Container */
@@ -267,6 +268,7 @@ const TABS = [
   {id:'mmt',       nome:'MMT',         titulo:'MMT',                   tipo:'blocos'},
   {id:'samu',      nome:'SAMU',        titulo:'SAMU',                  tipo:'blocos'},
   {id:'qrp',       nome:'⇪ VALIDAR QRP', titulo:'Validação de Protocolos QRP', tipo:'qrp'},
+  {id:'imp',       nome:'⇩ IMPORTAÇÃO (BCK)', titulo:'Importação (BCK)', tipo:'imp'},
 ];
 const KEY = 'gestorMapeado.v1';
 const teamCols = cols => cols.filter(c => c !== 'vinc');
@@ -421,8 +423,8 @@ function render(keepFocus){
   $('#hComp').textContent = state.competencia;
   $('#comp').value = state.competencia;
   renderTabs();
-  $('#view').innerHTML = tab.tipo==='mapa' ? renderMapa(tab) : tab.tipo==='qrp' ? renderQrp() : renderBlocos(tab);
-  $('#search').style.display = tab.tipo==='qrp' ? 'none' : '';
+  $('#view').innerHTML = tab.tipo==='mapa' ? renderMapa(tab) : tab.tipo==='qrp' ? renderQrp() : tab.tipo==='imp' ? renderImp() : renderBlocos(tab);
+  $('#search').style.display = (tab.tipo==='qrp' || tab.tipo==='imp') ? 'none' : '';
   if (keepFocus){
     const box = document.querySelector(`.chipbox[data-path="${keepFocus.path}"][data-k="${keepFocus.k}"] input`);
     if (box) box.focus();
@@ -619,9 +621,9 @@ function exportPDF(tabs, nome){
   doc.save(nome);
   toast('PDF gerado');
 }
-const DATA_TABS = TABS.filter(t => t.tipo!=='qrp');
+const DATA_TABS = TABS.filter(t => t.tipo==='mapa' || t.tipo==='blocos');
 $('#pdfAll').onclick = () => exportPDF(DATA_TABS, `GESTOR_MAPEADO_${state.competencia}_TODAS_AS_ABAS.pdf`);
-$('#pdfOne').onclick = () => { const t = TABS.find(x=>x.id===current); if (t.tipo==='qrp'){ qrpFiles.filter(f=>!f.erro).length ? qrpPDF(qrpFiles.filter(f=>!f.erro)) : toast('Carregue um arquivo .qrp'); return; } exportPDF([t], `GESTOR_MAPEADO_${state.competencia}_${t.nome.replace(/[^A-Z0-9]+/gi,'_')}.pdf`); };
+$('#pdfOne').onclick = () => { const t = TABS.find(x=>x.id===current); if (t.tipo==='imp'){ impRun?.st==='done' ? impPDF() : toast('Execute a importação para gerar o relatório'); return; } if (t.tipo==='qrp'){ qrpFiles.filter(f=>!f.erro).length ? qrpPDF(qrpFiles.filter(f=>!f.erro)) : toast('Carregue um arquivo .qrp'); return; } exportPDF([t], `GESTOR_MAPEADO_${state.competencia}_${t.nome.replace(/[^A-Z0-9]+/gi,'_')}.pdf`); };
 $('#xlsx').onclick = () => {
   if (!window.XLSX){ toast('Biblioteca Excel não carregou'); return; }
   const wb = XLSX.utils.book_new();
@@ -974,9 +976,10 @@ function groupEntries(entries){   // entries: [{file, path}] -> grupos por pasta
   entries.forEach(({file, path}) => {
     const parts = (path || file.name).split('/').filter(Boolean); parts.pop();
     const dir = parts.join('/');
-    if (!dirs.has(dir)) dirs.set(dir, {dir, nome: parts[parts.length-1] || '', qrps:[], bcks:[]});
+    if (parts.some(p => /^PARA IMPORTA[CÇ][AÃ]O$/i.test(norm(p)) || /^PARA IMPORTACAO$/.test(norm(p)))) return;   // ignora a pasta gerada pela importação
+    if (!dirs.has(dir)) dirs.set(dir, {dir, nome: parts[parts.length-1] || '', qrps:[], bcks:[], bckSz:{}});
     if (/\.qrp$/i.test(file.name)) dirs.get(dir).qrps.push(file);
-    else if (/\.bck$/i.test(file.name)) dirs.get(dir).bcks.push(file.name);
+    else if (/\.bck$/i.test(file.name)){ dirs.get(dir).bcks.push(file.name); dirs.get(dir).bckSz[file.name] = file.size; }
   });
   return [...dirs.values()].filter(g => g.qrps.length || (g.dir && g.bcks.length))
     .map(g => Object.assign(g, {pasta: g.dir ? parsePasta(g.nome) : null}));
@@ -992,7 +995,7 @@ function analyzeGroups(groups){
     g.qrps.forEach(file => {
       const chave = g.dir + '/' + file.name; if (vistos.has(chave)) return; vistos.add(chave);
       jobs.push(file.arrayBuffer().then(buf => {
-        const f = {id:uid(), chave, nome:file.name, pasta, porPasta, bcks:g.bcks, qrpsNaPasta:g.qrps.length};
+        const f = {id:uid(), chave, nome:file.name, pasta, porPasta, bcks:g.bcks, bckSz:g.bckSz, qrpsNaPasta:g.qrps.length};
         try { f.data = parseQRP(buf); f.matchId = autoMatch(f.data, pasta); } catch(e){ f.erro = e.message; }
         return f;
       }));
@@ -1203,6 +1206,187 @@ function qrpPDF(files){
   doc.save(`CRITICAS_QRP_${state.competencia}_${nm}.pdf`.replace(/_+\.pdf$/,'.pdf'));
   toast('PDF de críticas gerado');
 }
+
+/* ================= IMPORTAÇÃO (BCK) ================= */
+const PASTA_IMP = 'PARA IMPORTAÇÃO';
+let impSel = {};          // f.id -> true/false (marcação do operador)
+let impRun = null;        // {st:'run'|'done', raiz, itens:[{f, nome, tam, st, msg, pct}], inicio, fim}
+const fmtBytes = n => n==null ? '—' : n < 1024 ? n+' B' : n < 1048576 ? (n/1024).toFixed(1)+' KB' : (n/1048576).toFixed(2)+' MB';
+function bckDoEnvio(f){ const alvo = bckKey(f.data?.arquivo); return (f.bcks||[]).find(b => bckKey(b) === alvo) || null; }
+function impCandidatos(){
+  const val = qrpFiles.filter(f => !f.erro && f.porPasta && analisar(f).ok && bckDoEnvio(f));
+  // envio mais recente validado por estabelecimento
+  const last = {};
+  val.forEach(f => { const k = f.matchId || estKey(qName(f)), o = f.pasta?.ord || '';
+    if (!last[k] || o > (last[k].pasta?.ord || '')) last[k] = f; });
+  const recentes = new Set(Object.values(last));
+  return val.map(f => ({f, bck: bckDoEnvio(f), recente: recentes.has(f)}))
+    .sort((a,b) => (a.f.pasta?.distrito||'ZZZ').localeCompare(b.f.pasta?.distrito||'ZZZ') || (+a.f.pasta?.id||1e9)-(+b.f.pasta?.id||1e9));
+}
+const impMarcado = c => impSel[c.f.id] ?? c.recente;
+function renderImp(){
+  const cands = impCandidatos(), rej = qrpFiles.filter(f => f.erro || !analisar(f).ok).length;
+  const semPasta = qrpFiles.filter(f => !f.erro && !f.porPasta && analisar(f).ok).length;
+  const sel = cands.filter(impMarcado), suporte = !!window.showDirectoryPicker;
+  const tot = sel.reduce((a,c) => a + (c.f.bckSz?.[c.bck] || 0), 0);
+  const ST_IMP = {wait:['muted','Aguardando'], copy:['warn','Copiando'], ver:['warn','Verificando'], ok:['ok','✔ Copiado e verificado'], same:['ok','↺ Já existia (idêntico)'], err:['bad','✖ Erro']};
+  return `<div class="section">
+    <div class="section-head"><div><h3>Importação (BCK) — Competência ${fmtComp(state.competencia)}</h3>
+      <div class="sub">Gera a pasta “${PASTA_IMP}” dentro da pasta dos envios, apenas com cópias idênticas dos .bck dos IDs VALIDADOS</div></div></div>
+    <div class="qparams">
+      <div class="kpi main"><div class="l">Validados com .bck</div><div class="v">${cands.length}</div></div>
+      <div class="kpi"><div class="l">Selecionados p/ importação</div><div class="v">${sel.length}</div></div>
+      <div class="kpi"><div class="l">Tamanho total</div><div class="v sm">${fmtBytes(tot)}</div></div>
+      <div class="kpi" style="border-color:#f9c6d5"><div class="l">Rejeitados (não copiados)</div><div class="v" style="color:#be123c">${rej}</div></div>
+    </div>
+    ${!suporte ? `<div class="apont"><h4>Navegador sem suporte</h4>A criação da pasta exige o <b>Google Chrome</b> ou o <b>Microsoft Edge</b> no computador, com o sistema aberto pelo endereço do GitHub Pages (https).</div>` : ''}
+    ${!qrpFiles.length ? `<div class="empty" style="background:#fff;border:1px solid var(--line);border-radius:12px">Nenhum envio analisado ainda. Analise as pastas na aba <b>⇪ VALIDAR QRP</b> e volte aqui.</div>` : `
+    ${semPasta ? `<div class="apont aviso"><h4>Atenção</h4>${semPasta} protocolo(s) validado(s) foram carregados como arquivo solto (sem pasta) e não têm .bck associado — não entram na importação.</div>` : ''}
+    <div class="table-wrap" style="margin-top:6px"><table class="qt">
+      <thead><tr><th style="width:34px"><input type="checkbox" id="impAll"${cands.length && cands.every(impMarcado)?' checked':''}></th><th>Distrito</th><th>ID</th><th>Estabelecimento</th><th>Envio</th><th>Arquivo .bck</th><th class="num">Tamanho</th><th>Situação</th></tr></thead>
+      <tbody>${cands.map(c => { const p = c.f.pasta||{}, it = impRun?.itens.find(i => i.f===c.f);
+        return `<tr><td><input type="checkbox" data-imp="${c.f.id}"${impMarcado(c)?' checked':''}${impRun?.st==='run'?' disabled':''}></td>
+          <td>${p.padrao?`<span class="qdist">${esc(p.distrito)}</span>`:'—'}</td><td>${p.padrao?`<span class="qid">${esc(p.id)}</span>`:'—'}</td>
+          <td><b>${esc(qName(c.f))}</b>${!c.recente?'<div class="qcount">há envio validado mais recente deste estabelecimento</div>':''}</td>
+          <td>${p.padrao?`<span class="qenvio ${p.envio==='FINAL'?'final':'previa'}">${p.envio}</span>`:'—'}</td>
+          <td style="font-family:ui-monospace,Consolas,monospace;font-size:11.5px">${esc(c.bck)}</td>
+          <td class="num">${fmtBytes(c.f.bckSz?.[c.bck])}</td>
+          <td id="imp-${c.f.id}">${it ? `<span class="pill ${ST_IMP[it.st][0]}">${ST_IMP[it.st][1]}${it.st==='copy'||it.st==='ver'?' '+(it.pct||0)+'%':''}</span>${it.msg?`<div class="qcount">${esc(it.msg)}</div>`:''}` : '<span class="pill muted">—</span>'}</td></tr>`; }).join('')
+        || '<tr><td colspan="8" class="empty">Nenhum envio VALIDADO com arquivo .bck. Corrija os rejeitados e reanalise.</td></tr>'}</tbody>
+    </table></div>
+    <div class="qstage-foot" style="margin-top:16px">
+      <div class="hint" style="max-width:720px">Ao clicar, selecione <b>a mesma pasta usada na análise</b> (ex.: <code>K:\\envios\\09.2026</code>) e autorize a edição. O sistema cria a subpasta <b>${PASTA_IMP}</b> e copia cada .bck byte a byte, mantendo nome, tipo e tamanho; em seguida compara a cópia com o original. Os arquivos originais não são alterados. Arquivos que já existam na pasta com conteúdo diferente <b>não</b> são sobrescritos.</div>
+      <span class="sep"></span>
+      ${impRun?.st==='done' ? `<button class="btn btn-ghost" id="impPdf">⬇ Relatório da importação (PDF)</button>` : ''}
+      <button class="btn btn-success" id="impGo"${!suporte||!sel.length||impRun?.st==='run'?' disabled style="opacity:.5;cursor:not-allowed"':''}>${impRun?.st==='run'?'Copiando…':`⇩ Importação (BCK) — copiar ${sel.length} arquivo(s)`}</button>
+    </div>
+    ${impRun?.st==='done' ? (() => { const ok = impRun.itens.filter(i=>i.st==='ok').length, same = impRun.itens.filter(i=>i.st==='same').length, err = impRun.itens.filter(i=>i.st==='err').length;
+      return `<div class="apont ${err?'':'good'}" style="margin-top:14px"><h4>${err?'Importação concluída com erros':'Importação concluída'}</h4>
+        Pasta: <b>${esc(impRun.raiz)}\\${esc(impRun.pasta||PASTA_IMP)}</b> · ${ok} copiado(s) e verificado(s)${same?` · ${same} já existia(m) idêntico(s)`:''}${err?` · <b>${err} com erro</b> (ver coluna Situação)`:''}.</div>`; })() : ''}
+    `}
+  </div>`;
+}
+async function getSubdir(dir, nome){ try { return await dir.getDirectoryHandle(nome); } catch(_){ return null; } }
+async function localizarPastaEnvio(raiz, f){
+  const dirRel = f.chave.replace(/\/[^/]*$/,'').split('/').filter(Boolean);
+  // caminho completo (ignorando o nome da raiz, se for o primeiro nível)
+  let partes = dirRel[0] === raiz.name ? dirRel.slice(1) : dirRel, h = raiz;
+  for (const p of partes){ h = await getSubdir(h, p); if (!h) break; }
+  if (h && h !== raiz) return h;
+  return await getSubdir(raiz, dirRel[dirRel.length-1]);   // pasta do envio direto dentro da selecionada
+}
+async function mesmosBytes(a, b, onPct){
+  if (a.size !== b.size) return false;
+  const STEP = 4 * 1048576;
+  for (let o = 0; o < a.size; o += STEP){
+    const [x, y] = await Promise.all([a.slice(o, o+STEP).arrayBuffer(), b.slice(o, o+STEP).arrayBuffer()]);
+    const u = new Uint8Array(x), v = new Uint8Array(y);
+    for (let i = 0; i < u.length; i++) if (u[i] !== v[i]) return false;
+    onPct && onPct(Math.min(100, Math.round((o+STEP)/a.size*100)));
+  }
+  return true;
+}
+function impUpd(it){
+  const el = document.getElementById('imp-'+it.f.id); if (!el) return;
+  const map = {wait:['muted','Aguardando'], copy:['warn','Copiando'], ver:['warn','Verificando'], ok:['ok','✔ Copiado e verificado'], same:['ok','↺ Já existia (idêntico)'], err:['bad','✖ Erro']};
+  el.innerHTML = `<span class="pill ${map[it.st][0]}">${map[it.st][1]}${it.st==='copy'||it.st==='ver'?' '+(it.pct||0)+'%':''}</span>${it.msg?`<div class="qcount">${esc(it.msg)}</div>`:''}`;
+}
+async function executarImportacao(){
+  const sel = impCandidatos().filter(impMarcado);
+  if (!sel.length) return;
+  // nomes repetidos na seleção (mesmo .bck em dois envios)
+  const nomes = {}; sel.forEach(c => (nomes[c.bck.toLowerCase()] = (nomes[c.bck.toLowerCase()]||0)+1));
+  let raiz;
+  try { raiz = await window.showDirectoryPicker({id:'gm-envios', mode:'readwrite'}); }
+  catch(e){ if (e.name !== 'AbortError') toast('Não foi possível abrir a pasta: '+e.message); return; }
+  if (await raiz.queryPermission({mode:'readwrite'}) !== 'granted' && await raiz.requestPermission({mode:'readwrite'}) !== 'granted'){ toast('Permissão de gravação negada'); return; }
+  // confere se é a pasta da análise: ao menos uma pasta de envio precisa existir nela
+  const achou = []; for (const c of sel) achou.push(await localizarPastaEnvio(raiz, c.f));
+  if (!achou.some(Boolean)){ toast(`A pasta "${raiz.name}" não contém as pastas dos envios analisados. Selecione a mesma pasta da análise.`); return; }
+  impRun = {st:'run', raiz: raiz.name, inicio: new Date(), itens: sel.map((c,i) => ({f:c.f, nome:c.bck, tam:c.f.bckSz?.[c.bck], st:'wait', pct:0, dir:achou[i]}))};
+  render();
+  let destino;
+  const criar = async nome => {   // cria a subpasta e confirma que é de fato uma pasta nova dentro da selecionada
+    const d = await raiz.getDirectoryHandle(nome, {create:true});
+    const rel = await raiz.resolve(d);
+    if (await d.isSameEntry(raiz) || !rel || rel.length !== 1) throw new Error('subpasta não confirmada');
+    return d;
+  };
+  try { destino = await criar(PASTA_IMP); impRun.pasta = PASTA_IMP; }
+  catch(e1){
+    try { destino = await criar('PARA IMPORTACAO'); impRun.pasta = 'PARA IMPORTACAO'; toast('O sistema de arquivos não aceitou acentos: pasta criada como PARA IMPORTACAO'); }
+    catch(e){ impRun.itens.forEach(it => { it.st='err'; it.msg='Não foi possível criar a pasta '+PASTA_IMP+': '+e.message; }); impRun.st='done'; render(); return; }
+  }
+  for (const it of impRun.itens){
+    try {
+      if (nomes[it.nome.toLowerCase()] > 1) throw new Error('Mesmo nome de .bck em mais de um envio selecionado — desmarque um deles.');
+      if (!it.dir) throw new Error('Pasta do envio não encontrada na pasta selecionada.');
+      const src = await (await it.dir.getFileHandle(it.nome)).getFile();
+      it.tam = src.size;
+      let existente = null; try { existente = await (await destino.getFileHandle(it.nome)).getFile(); } catch(_){}
+      if (existente){
+        it.st='ver'; impUpd(it);
+        if (await mesmosBytes(src, existente, p => { it.pct=p; impUpd(it); })){ it.st='same'; it.msg=''; impUpd(it); continue; }
+        throw new Error('Já existe um arquivo com este nome em '+PASTA_IMP+' com conteúdo diferente — não foi sobrescrito.');
+      }
+      it.st='copy'; it.pct=0; impUpd(it);
+      const fh = await destino.getFileHandle(it.nome, {create:true});
+      const w = await fh.createWritable({keepExistingData:false});
+      try {
+        const STEP = 4 * 1048576;
+        for (let o = 0; o < src.size; o += STEP){
+          await w.write(await src.slice(o, o+STEP).arrayBuffer());
+          it.pct = Math.min(100, Math.round((o+STEP)/src.size*100)); impUpd(it);
+        }
+        if (src.size === 0) await w.write(new Uint8Array(0));
+        await w.close();
+      } catch(e){ try { await w.abort(); } catch(_){} throw e; }
+      it.st='ver'; it.pct=0; impUpd(it);
+      const copia = await fh.getFile();
+      if (!(await mesmosBytes(src, copia, p => { it.pct=p; impUpd(it); }))){
+        try { await destino.removeEntry(it.nome); } catch(_){}
+        throw new Error('A cópia não ficou idêntica ao original e foi descartada. Tente novamente.');
+      }
+      it.st='ok'; it.msg = `${fmtBytes(copia.size)} · conferido byte a byte`; impUpd(it);
+    } catch(e){ it.st='err'; it.msg = e.message; impUpd(it); }
+  }
+  impRun.st='done'; impRun.fim = new Date(); render();
+  const err = impRun.itens.filter(i=>i.st==='err').length;
+  toast(err ? `Importação concluída com ${err} erro(s)` : `Pasta ${impRun.pasta||PASTA_IMP} gerada com sucesso`);
+}
+function impPDF(){
+  if (!window.jspdf || !impRun) return;
+  const { jsPDF } = window.jspdf, doc = new jsPDF({unit:'mm', format:'a4', orientation:'landscape'});
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+  const header = () => { doc.setFillColor(7,46,80); doc.rect(0,0,W,20,'F'); doc.setFillColor(3,75,117); doc.rect(W/2,0,W/2,20,'F');
+    doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text('RELATÓRIO DE IMPORTAÇÃO (BCK)', 12, 9);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(165,208,245); doc.text(`GESTOR MAPEADO · TRANSMISSOR DID · COMPETÊNCIA ${fmtComp(state.competencia)}`, 12, 15); };
+  header();
+  const ok = impRun.itens.filter(i=>i.st==='ok').length, same = impRun.itens.filter(i=>i.st==='same').length, err = impRun.itens.filter(i=>i.st==='err').length;
+  doc.setTextColor(15,23,42); doc.setFontSize(9.5);
+  doc.text(`Pasta de destino: ${impRun.raiz}\\${impRun.pasta||PASTA_IMP}`, 12, 28);
+  doc.text(`Início: ${impRun.inicio.toLocaleString('pt-BR')}   Término: ${impRun.fim.toLocaleString('pt-BR')}   Copiados e verificados: ${ok}   Já existentes (idênticos): ${same}   Erros: ${err}`, 12, 33.5);
+  const lbl = {ok:'Copiado e verificado', same:'Já existia (idêntico)', err:'Erro', wait:'Não processado', copy:'Interrompido', ver:'Interrompido'};
+  doc.autoTable({ startY:38, margin:{left:10,right:10,top:26}, theme:'grid',
+    head:[['Distrito','ID','Estabelecimento','Envio','Arquivo .bck','Tamanho (bytes)','Situação','Observação']],
+    body: impRun.itens.map(i => [i.f.pasta?.distrito||'-', i.f.pasta?.id||'-', qName(i.f), i.f.pasta?.envio||'-', i.nome, i.tam!=null?i.tam.toLocaleString('pt-BR'):'-', lbl[i.st], i.msg||'']),
+    styles:{fontSize:7.5, cellPadding:1.6, lineColor:[203,213,225], lineWidth:.15, textColor:[15,23,42]}, headStyles:{fillColor:[3,75,117], textColor:255},
+    columnStyles:{4:{cellWidth:62}, 5:{halign:'right'}},
+    didParseCell: c => { if (c.section==='body' && c.column.index===6){ c.cell.styles.fontStyle='bold'; c.cell.styles.textColor = c.cell.raw==='Erro' ? [224,36,94] : [16,185,129]; } },
+    didDrawPage: header });
+  const n = doc.getNumberOfPages();
+  for (let i=1;i<=n;i++){ doc.setPage(i); doc.setFontSize(7); doc.setTextColor(100,116,139); doc.text('DID · Diretoria de Inteligência de Dados — SEMSA Manaus · cópias conferidas byte a byte com os originais', 10, H-6); doc.text(`Página ${i} de ${n}`, W-10, H-6, {align:'right'}); }
+  doc.save(`IMPORTACAO_BCK_${state.competencia}.pdf`);
+}
+document.addEventListener('change', e => {
+  const cb = e.target.closest && e.target.closest('[data-imp]');
+  if (cb){ impSel[cb.dataset.imp] = cb.checked; render(); return; }
+  if (e.target.id==='impAll'){ impCandidatos().forEach(c => impSel[c.f.id] = e.target.checked); render(); }
+});
+document.addEventListener('click', e => {
+  if (e.target.id==='impGo'){ executarImportacao(); }
+  if (e.target.id==='impPdf'){ impPDF(); }
+});
 
 /* ================= INÍCIO ================= */
 state = load();
