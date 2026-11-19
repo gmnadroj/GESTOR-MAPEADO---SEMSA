@@ -14,8 +14,8 @@
   --green:#10b981; --green-d:#059669; --red:#e0245e;
 }
 *{box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(to right,var(--navy),var(--navy2));background-attachment:fixed;color:#14171a;margin:0;padding:20px 20px 60px;min-height:100vh;display:flex;flex-direction:column}
-.wrap{max-width:1440px;width:100%;margin:0 auto}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(to right,var(--navy),var(--navy2));background-attachment:fixed;color:#14171a;margin:0;padding:16px 16px 60px;min-height:100vh;display:flex;flex-direction:column}
+.wrap{max-width:none;width:100%;margin:0 auto}
 
 /* Cabeçalho */
 .app-header{display:flex;align-items:center;justify-content:center;gap:25px;margin:0 auto 20px;padding:20px 35px;background:rgba(255,255,255,.06);border-radius:16px;border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(10px);box-shadow:0 8px 25px rgba(0,0,0,.15)}
@@ -55,7 +55,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 /* KPIs */
 .kpis{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
 .kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 18px;min-width:110px;flex:1;box-shadow:0 2px 4px rgba(0,0,0,.02)}
-.kpi .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.4px}
+.kpi .l{font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.2px;overflow-wrap:anywhere;line-height:1.3}
+.kpis .kpi{padding:12px 14px;min-width:92px}
 .kpi .v{font-size:24px;font-weight:800;color:var(--ink);margin-top:2px;font-variant-numeric:tabular-nums}
 .kpi.main{background:var(--navy2);border-color:var(--navy2)}
 .kpi.main .l{color:var(--sky-soft)}.kpi.main .v{color:#fff}
@@ -67,10 +68,21 @@ th{text-align:left;padding:12px 10px;border-bottom:2px solid var(--line2);color:
 th.num,td.num{text-align:center}
 td{padding:9px 10px;border-bottom:1px solid var(--line);color:var(--ink);vertical-align:top}
 tbody tr:hover{background:#f3faff}
-td.est{min-width:230px;max-width:300px;font-weight:700;font-size:12px}
+td.est{font-weight:700;font-size:12px;word-break:break-word}
 td.est .name{outline:none;border-radius:6px;padding:3px 5px;margin:-3px -5px;display:block}
 td.est .name:focus{background:#e0f2fe;box-shadow:0 0 0 2px var(--sky)}
-td.chipcell{min-width:170px}
+td.chipcell{min-width:0}
+table.grid{table-layout:fixed}
+table.grid th{white-space:normal;line-height:1.25;padding:10px 8px}
+table.grid td{padding:8px 6px}
+table.grid td.est{padding-left:10px}
+table.grid .chipbox input{min-width:36px}
+table.grid .chip{font-size:11px}
+.cls{display:inline-block;padding:4px 8px;border-radius:6px;font-size:10px;font-weight:800;letter-spacing:.4px;white-space:nowrap}
+.cls.gm{background:#034b75;color:#fff}.cls.est{background:#e2e8f0;color:#334155}
+tfoot .cls{background:rgba(255,255,255,.18);color:#fff}
+.table-wrap{overflow-x:visible}
+@media (max-width:1000px){.table-wrap{overflow-x:auto}table.grid{table-layout:auto;min-width:900px}}
 td.num .n{display:inline-block;min-width:38px;padding:5px 10px;border-radius:9999px;font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;background:#e0f2fe;color:var(--navy2)}
 td.num .n.eas{background:#dcfce7;color:#065f46}
 td.num .n.zero{background:#f1f5f9;color:#94a3b8}
@@ -208,7 +220,7 @@ table.qt td{white-space:normal;vertical-align:middle}
 <body>
 <div class="wrap">
   <div class="app-header">
-    <img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo_did.png" alt="Diretoria de Inteligência de Dados" class="app-logo" onerror="this.style.display='none'">
+    <img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo-did.png" alt="Diretoria de Inteligência de Dados" class="app-logo" onerror="this.style.display='none'">
     <div class="app-title-group">
       <h1>GESTOR MAPEADO</h1>
       <h2>Secretaria Municipal de Saúde - SEMSA · Competência <span id="hComp"></span></h2>
@@ -237,7 +249,7 @@ table.qt td{white-space:normal;vertical-align:middle}
 <div class="footer">
   <div class="footer-left"><img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo_pmm_white.png" alt="Prefeitura de Manaus" class="footer-logo" onerror="this.style.display='none'"></div>
   <div class="footer-center">
-    <img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo_did.png" alt="DID" onerror="this.style.display='none'">
+    <img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo-did.png" alt="DID" onerror="this.style.display='none'">
     <div>Diretoria de Inteligência de Dados</div>
     <div>Gerência de Análise e Estatística</div>
     <div>DID © 2026</div>
@@ -324,6 +336,11 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 const count = arr => (arr||[]).filter(c => !c.off).length;
 const rowTeams = (r, cols) => teamCols(cols).reduce((a,k) => a + count(r.f[k]), 0);
 const rowEas = r => 1 + count(r.f.vinc);
+const classif = eas => eas > 1 ? 'GESTOR MAPEADO' : 'ESTABELECIMENTO';
+const clsBadge = eas => `<span class="cls ${eas>1?'gm':'est'}">${classif(eas)}</span>`;
+function colgroup(nChips, extras){   // larguras fixas para caber na tela sem rolagem
+  return `<colgroup><col style="width:${nChips>5?15:18}%">${'<col>'.repeat(nChips)}${extras.map(w=>`<col style="width:${w}px">`).join('')}</colgroup>`;
+}
 function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2200); }
 function rowMatches(r){
   if (!query) return true;
@@ -343,7 +360,8 @@ function tabTotals(tab){
   const d = state.tabs[tab.id], res = {est:0, eq:0, eas:0, por:{}};
   if (tab.tipo === 'mapa'){
     tab.cols.forEach(k => res.por[k] = 0);
-    d.rows.forEach(r => { res.est++; tab.cols.forEach(k => res.por[k] += count(r.f[k])); res.eq += rowTeams(r, tab.cols); res.eas += rowEas(r); });
+    res.gm = 0; res.est1 = 0;
+    d.rows.forEach(r => { if (rowEas(r) > 1) res.gm++; else res.est1++; res.est++; tab.cols.forEach(k => res.por[k] += count(r.f[k])); res.eq += rowTeams(r, tab.cols); res.eas += rowEas(r); });
   } else {
     d.blocos.forEach(b => { const t = blocoTotals(b); res.est += b.rows.length; res.eq += t.eq; res.eas += t.eas;
       b.cols.forEach(k => res.por[k] = (res.por[k]||0) + t[k]); });
@@ -372,6 +390,7 @@ function kpis(tab){
     <div class="kpi main"><div class="l">Qtde. Equipes</div><div class="v">${t.eq}</div></div>
     <div class="kpi main"><div class="l">Qtde. EAS</div><div class="v">${t.eas}</div></div>
     <div class="kpi"><div class="l">Estabelecimentos</div><div class="v">${t.est}</div></div>
+    ${tab.tipo==='mapa' ? `<div class="kpi"><div class="l">Gestor Mapeado (EAS &gt; 1)</div><div class="v">${t.gm}</div></div><div class="kpi"><div class="l">Estabelecimento (EAS = 1)</div><div class="v">${t.est1}</div></div>` : ''}
     ${cols.map(k=>`<div class="kpi"><div class="l">${COLS[k].l}</div><div class="v">${t.por[k]}</div></div>`).join('')}
   </div>`;
 }
@@ -385,15 +404,15 @@ function renderMapa(tab){
     <div class="section-head"><div><h3>${esc(tab.titulo)} — Competência ${esc(state.competencia)}</h3>
       <div class="sub">Qtde. Equipes = ${tc.map(k=>COLS[k].l).join(' + ')} · Qtde. EAS = Estabelecimento${cols.includes('vinc')?' + Unidades Vinculadas':''}</div></div></div>
     ${kpis(tab)}
-    <div class="table-wrap"><table>
-      <thead><tr><th>Estabelecimento</th>${cols.map(k=>`<th>${COLS[k].l}</th>`).join('')}<th class="num">Qtde. Equipes</th><th class="num">Qtde. EAS</th><th></th></tr></thead>
+    <div class="table-wrap"><table class="grid">${colgroup(cols.length,[70,58,124,34])}
+      <thead><tr><th>Estabelecimento</th>${cols.map(k=>`<th>${COLS[k].l}</th>`).join('')}<th class="num">Qtde. Equipes</th><th class="num">Qtde. EAS</th><th class="num">Classificação</th><th></th></tr></thead>
       <tbody>${rows.length ? rows.map(([r,i]) => `<tr data-row="${i}">
         <td class="est"><span class="name" contenteditable="true" spellcheck="false" data-path="${tab.id}.rows.${i}">${esc(r.nome)}</span></td>
         ${cols.map(k=>`<td class="chipcell">${chipBox(r.f[k], k, `${tab.id}.rows.${i}`)}</td>`).join('')}
-        ${numCell(rowTeams(r,cols))}${numCell(rowEas(r),'eas')}
+        ${numCell(rowTeams(r,cols))}${numCell(rowEas(r),'eas')}<td class="num">${clsBadge(rowEas(r))}</td>
         <td class="act"><button class="del" data-del="${tab.id}.rows.${i}" title="Excluir estabelecimento">🗑</button></td></tr>`).join('')
-        : `<tr><td colspan="${cols.length+4}" class="empty">Nenhum estabelecimento encontrado.</td></tr>`}</tbody>
-      <tfoot><tr><td>TOTAL — ${tot.est} estabelecimento(s)</td>${cols.map(k=>`<td class="num">${tot.por[k]}</td>`).join('')}<td class="num">${tot.eq}</td><td class="num">${tot.eas}</td><td></td></tr></tfoot>
+        : `<tr><td colspan="${cols.length+5}" class="empty">Nenhum estabelecimento encontrado.</td></tr>`}</tbody>
+      <tfoot><tr><td>TOTAL — ${tot.est} estabelecimento(s)</td>${cols.map(k=>`<td class="num">${tot.por[k]}</td>`).join('')}<td class="num">${tot.eq}</td><td class="num">${tot.eas}</td><td class="num" style="font-size:10.5px;line-height:1.5">${tot.gm} GM<br>${tot.est1} EST</td><td></td></tr></tfoot>
     </table></div>
     <button class="btn btn-ghost add-row" data-add="${tab.id}">+ Adicionar estabelecimento</button>
     ${legend(cols)}
@@ -410,8 +429,8 @@ function renderBlocos(tab){
       const t = blocoTotals(b), p = `${tab.id}.blocos.${bi}`;
       const rows = b.rows.map((r,i)=>[r,i]).filter(([r])=>rowMatches(r));
       return `<div class="bloco">
-      <div class="bloco-title">${esc(b.titulo)}</div>
-      <div class="table-wrap"><table>
+      <div class="bloco-title">${esc(b.titulo)} ${clsBadge(t.eas)}</div>
+      <div class="table-wrap"><table class="grid">${colgroup(b.cols.length,[96,34])}
         <thead><tr><th>Estabelecimento</th>${b.cols.map(k=>`<th>${COLS[k].l}</th>`).join('')}<th class="num">Qtde. Equipes</th><th></th></tr></thead>
         <tbody>${rows.map(([r,i])=>`<tr>
           <td class="est"><span class="name" contenteditable="true" spellcheck="false" data-path="${p}.rows.${i}">${esc(r.nome)}</span></td>
@@ -421,7 +440,7 @@ function renderBlocos(tab){
         <tfoot>
           <tr><td>TOTAL EQUIPES</td>${b.cols.map(k=>`<td class="num"><input data-ovr="${p}" data-k="${k}" value="${b.ovr[k]??''}" placeholder="${b.rows.reduce((a,r)=>a+count(r.f[k]),0)}" inputmode="numeric"></td>`).join('')}
             <td class="num"><input data-ovr="${p}" data-k="eq" value="${b.ovr.eq??''}" placeholder="${t._autoEq}" inputmode="numeric"></td><td></td></tr>
-          <tr><td>TOTAL EAS</td><td class="num"><input data-ovr="${p}" data-k="eas" value="${b.ovr.eas??''}" placeholder="${t._autoEas}" inputmode="numeric"></td><td colspan="${b.cols.length+1}"></td></tr>
+          <tr><td>TOTAL EAS</td><td class="num"><input data-ovr="${p}" data-k="eas" value="${b.ovr.eas??''}" placeholder="${t._autoEas}" inputmode="numeric"></td><td colspan="${b.cols.length+1}">${clsBadge(t.eas)}</td></tr>
         </tfoot>
       </table></div>
       <button class="btn btn-ghost add-row" data-addb="${p}">+ Adicionar estabelecimento</button>
@@ -569,9 +588,9 @@ function tableData(tab){
   if (tab.tipo==='mapa'){
     const t = tabTotals(tab);
     out.push({titulo: `${tab.titulo} — Competência ${state.competencia}`,
-      head: ['Estabelecimento', ...tab.cols.map(k=>COLS[k].l), 'Qtde. Equipes', 'Qtde. EAS'],
-      body: d.rows.map(r => [r.nome, ...tab.cols.map(k=>joinChips(r.f[k])), rowTeams(r,tab.cols), rowEas(r)]),
-      foot: [`TOTAL (${t.est})`, ...tab.cols.map(k=>t.por[k]), t.eq, t.eas],
+      head: ['Estabelecimento', ...tab.cols.map(k=>COLS[k].l), 'Qtde. Equipes', 'Qtde. EAS', 'Classificação'],
+      body: d.rows.map(r => [r.nome, ...tab.cols.map(k=>joinChips(r.f[k])), rowTeams(r,tab.cols), rowEas(r), classif(rowEas(r))]),
+      foot: [`TOTAL (${t.est})`, ...tab.cols.map(k=>t.por[k]), t.eq, t.eas, `${t.gm} GM / ${t.est1} EST`],
       obs: d.obs.map(o=>o.v)});
   } else {
     d.blocos.forEach(b => { const t = blocoTotals(b);
@@ -579,7 +598,7 @@ function tableData(tab){
         head: ['Estabelecimento', ...b.cols.map(k=>COLS[k].l), 'Qtde. Equipes'],
         body: b.rows.map(r => [r.nome, ...b.cols.map(k=>joinChips(r.f[k])), rowTeams(r,b.cols)]),
         foot: ['TOTAL EQUIPES', ...b.cols.map(k=>t[k]), t.eq],
-        extra: [['TOTAL EAS', t.eas]],
+        extra: [['TOTAL EAS', t.eas], ['CLASSIFICAÇÃO', classif(t.eas)]],
         obs: b.obs.map(o=>o.v)}); });
   }
   return out;
@@ -617,7 +636,7 @@ function exportPDF(tabs, nome){
         headStyles:{fillColor:[240,248,255], textColor:[51,65,85], fontStyle:'bold', lineWidth:.15},
         footStyles:{fillColor:[3,75,117], textColor:255, fontStyle:'bold'},
         alternateRowStyles:{fillColor:[248,251,255]},
-        columnStyles: Object.assign({0:{cellWidth:52, fontStyle:'bold'}}, ...Array.from({length:nc},(_,i)=> i>=nc-(tab.tipo==='mapa'?2:1) ? {[i]:{halign:'center', cellWidth:17, fontStyle:'bold'}} : {})),
+        columnStyles: Object.assign({0:{cellWidth:52, fontStyle:'bold'}}, ...Array.from({length:nc},(_,i)=> i>=nc-(tab.tipo==='mapa'?3:1) ? {[i]:{halign:'center', cellWidth: (tab.tipo==='mapa' && i===nc-1) ? 27 : 15, fontStyle:'bold', fontSize: (tab.tipo==='mapa' && i===nc-1) ? 6.2 : 7}} : {})),
         showFoot:'lastPage',
         didDrawPage: () => header(tab.nome)
       });
