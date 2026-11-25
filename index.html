@@ -26,7 +26,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 
 /* Abas */
 .tabs{display:flex;gap:6px;flex-wrap:wrap;padding:0 4px}
-.tab{background:rgba(255,255,255,.08);color:#dbeafe;border:1px solid rgba(255,255,255,.12);border-bottom:none;padding:11px 18px;border-radius:12px 12px 0 0;font-size:13px;font-weight:700;letter-spacing:.6px;cursor:pointer;text-transform:uppercase;transition:.2s;white-space:nowrap}
+.tab{background:rgba(255,255,255,.08);color:#dbeafe;border:1px solid rgba(255,255,255,.12);border-bottom:none;padding:10px 13px;border-radius:12px 12px 0 0;font-size:12px;font-weight:700;letter-spacing:.6px;cursor:pointer;text-transform:uppercase;transition:.2s;white-space:nowrap}
 .tab:hover{background:rgba(255,255,255,.16);color:#fff}
 .tab[data-tab="qrp"]{background:rgba(16,185,129,.18);border-color:rgba(16,185,129,.45);color:#d1fae5}
 .tab[data-tab="imp"]{background:rgba(29,161,242,.2);border-color:rgba(29,161,242,.5);color:#e0f2fe}
@@ -199,6 +199,36 @@ table.qt td{white-space:normal;vertical-align:middle}
 .apont ol{margin:0;padding-left:20px}.apont li{margin:4px 0;line-height:1.45}
 .qgrid{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
 @media (max-width:1000px){.qgrid{grid-template-columns:1fr}}
+.modal{position:fixed;inset:0;background:rgba(7,46,80,.55);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+.mbox{background:#fff;border-radius:14px;width:min(560px,100%);max-height:92vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.35);padding:20px 22px}
+.mhead{font-size:15px;font-weight:800;color:var(--navy2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px}
+.mres{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.6;margin-bottom:12px;color:var(--ink)}
+.mlab{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:10px}
+.mlab select,.mlab textarea,.mlab input{font:inherit;font-size:14px;text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink);border:1px solid var(--line2);border-radius:8px;padding:9px 11px;outline:none;background:#fff}
+.mlab textarea{resize:vertical;min-height:72px}
+.mlab select:focus,.mlab textarea:focus,.mlab input:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(29,161,242,.15)}
+.req{color:var(--red)}
+.merr{color:var(--red);font-size:12.5px;font-weight:600;min-height:16px;margin-bottom:6px}
+.mfoot{display:flex;justify-content:flex-end;gap:10px}
+.hlink{display:inline-block;margin-top:4px;background:none;border:none;padding:0;color:var(--sky-d);font-size:10.5px;font-weight:700;cursor:pointer}
+.hlink:hover{text-decoration:underline}
+.chip.has-h{box-shadow:0 1px 2px rgba(0,0,0,.12),inset 0 -2px 0 rgba(3,75,117,.35)}
+.hclr{background:none;border:none;color:var(--navy2);font-weight:800;cursor:pointer;padding:0 0 0 4px}
+table.hist td{font-size:12px}
+.tab[data-tab="hist"]:not(.active){background:rgba(255,255,255,.12)}
+.chip.hl{background:#fde047 !important;border-left-color:#ca8a04 !important;box-shadow:0 0 0 2px #facc15,0 1px 3px rgba(0,0,0,.2)}
+.chip.hl.off{background:#fef9c3 !important}
+.chip button{padding:1px 2px}
+.chipbox.wc{position:relative;padding-top:20px}
+.ccount{position:absolute;top:2px;left:4px;font-size:10.5px;font-weight:900;color:var(--navy2);background:#e0f2fe;border-radius:9999px;padding:1px 8px;line-height:15px;font-variant-numeric:tabular-nums}
+.ccount.z{background:#f1f5f9;color:#94a3b8}
+.ccount small{font-size:9px;font-weight:700;color:#94a3b8;margin-left:4px}
+.btn-warn{background:#d97706;color:#fff}.btn-warn:hover{background:#b45309}
+.ignbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:#fffbeb;border:1px dashed #fcd34d;border-radius:10px;padding:10px 14px;margin:12px 0;font-size:12.5px;color:#92400e}
+.apont.ignbox{background:#fffbeb;border-color:#fcd34d}.apont.ignbox h4{color:#92400e}
+.qcard.ign{border-left-color:#d97706}
+.qstatus.ign{background:#d97706;color:#fff}
+.qcount.ign{color:#b45309;font-weight:800}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:9999px;font-size:13px;font-weight:600;opacity:0;transition:.25s;pointer-events:none;z-index:99}
 .toast.on{opacity:1;transform:translateX(-50%)}
 
@@ -220,7 +250,7 @@ table.qt td{white-space:normal;vertical-align:middle}
 <body>
 <div class="wrap">
   <div class="app-header">
-    <img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo_did.png" alt="Diretoria de Inteligência de Dados" class="app-logo" onerror="this.style.display='none'">
+    <img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo-did.png" alt="Diretoria de Inteligência de Dados" class="app-logo" onerror="this.style.display='none'">
     <div class="app-title-group">
       <h1>GESTOR MAPEADO</h1>
       <h2>Secretaria Municipal de Saúde - SEMSA · Competência <span id="hComp"></span></h2>
@@ -249,7 +279,7 @@ table.qt td{white-space:normal;vertical-align:middle}
 <div class="footer">
   <div class="footer-left"><img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo_pmm_white.png" alt="Prefeitura de Manaus" class="footer-logo" onerror="this.style.display='none'"></div>
   <div class="footer-center">
-    <img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo_did.png" alt="DID" onerror="this.style.display='none'">
+    <img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo-did.png" alt="DID" onerror="this.style.display='none'">
     <div>Diretoria de Inteligência de Dados</div>
     <div>Gerência de Análise e Estatística</div>
     <div>DID © 2026</div>
@@ -281,6 +311,7 @@ const TABS = [
   {id:'samu',      nome:'SAMU',        titulo:'SAMU',                  tipo:'blocos'},
   {id:'qrp',       nome:'⇪ VALIDAR QRP', titulo:'Validação de Protocolos QRP', tipo:'qrp'},
   {id:'imp',       nome:'⇩ IMPORTAÇÃO (BCK)', titulo:'Importação (BCK)', tipo:'imp'},
+  {id:'hist',      nome:'🕘 HISTÓRICO', titulo:'Histórico de alterações', tipo:'hist'},
 ];
 const KEY = 'gestorMapeado.v1';
 const teamCols = cols => cols.filter(c => c !== 'vinc');
@@ -312,6 +343,8 @@ function load(){
       const novo = hydrate(SEED);
       novo.competencia = old.competencia || novo.competencia;
       if (old.config) novo.config = old.config;
+      if (old.hist) novo.hist = old.hist;
+      if (old.qrpIgn) novo.qrpIgn = old.qrpIgn;
       novo.seedVer = SEED_VER; seedAtualizado = true;
       try { localStorage.setItem(KEY, JSON.stringify(novo)); } catch(_){}
       return novo;
@@ -374,13 +407,18 @@ function renderTabs(){
   $('#tabs').innerHTML = TABS.map(t => `<button class="tab${t.id===current?' active':''}" data-tab="${t.id}">${t.nome}</button>`).join('');
 }
 function chipHTML(c, k, i){
-  return `<span class="chip k-${k}${c.off?' off':''}" data-i="${i}" title="${c.off?'Desativado — não entra na contagem. ':''}Duplo clique para editar">`+
-    `<span class="t">${esc(c.v)}</span>`+
+  const mt = c.mot ? `Último registro: ${c.mot.acao} em ${fmtTs(c.mot.ts)} — ${c.mot.motivo}. ` : '';
+  return `<span class="chip k-${k}${c.off?' off':''}${c.hl?' hl':''}${c.mot?' has-h':''}" data-i="${i}" title="${esc(mt)}${c.hl?'Equipe realçada (conta na quantidade). ':''}${c.off?'Desativado — não entra na contagem. ':''}Duplo clique para editar">`+
+    `<span class="t">${c.hl?'★ ':''}${esc(c.v)}</span>`+
+    (isLog(k) ? `<button data-act="hl" title="${c.hl?'Remover realce':'Realçar equipe (continua contando)'}">${c.hl?'☆':'★'}</button><button data-act="mv" title="Remanejar para outro estabelecimento">⇄</button>` : '')+
     `<button data-act="toggle" title="${c.off?'Reativar':'Marcar como desativado (não conta)'}">${c.off?'↺':'⊘'}</button>`+
     `<button data-act="rm" title="Remover">×</button></span>`;
 }
 function chipBox(arr, k, path, ph){
-  return `<div class="chipbox" data-path="${path}" data-k="${k}">${(arr||[]).map((c,i)=>chipHTML(c,k,i)).join('')}`+
+  let cnt = '';
+  if (isLog(k)){ const a = arr||[], n = count(a), off = a.length - n, hl = a.filter(c=>c.hl && !c.off).length;
+    cnt = `<span class="ccount${n?'':' z'}" title="${n} ${COLS[k].l} contando${hl?` (${hl} realçada${hl>1?'s':''})`:''}${off?` · ${off} desativada${off>1?'s':''} (não conta${off>1?'m':''})`:''}">${n}${off?`<small>+${off}⊘</small>`:''}</span>`; }
+  return `<div class="chipbox${cnt?' wc':''}" data-path="${path}" data-k="${k}">${cnt}${(arr||[]).map((c,i)=>chipHTML(c,k,i)).join('')}`+
     `<input placeholder="${ph||'+ Enter'}" aria-label="Adicionar ${COLS[k]?COLS[k].l:'item'}"></div>`;
 }
 function kpis(tab){
@@ -407,7 +445,7 @@ function renderMapa(tab){
     <div class="table-wrap"><table class="grid">${colgroup(cols.length,[70,58,124,34])}
       <thead><tr><th>Estabelecimento</th>${cols.map(k=>`<th>${COLS[k].l}</th>`).join('')}<th class="num">Qtde. Equipes</th><th class="num">Qtde. EAS</th><th class="num">Classificação</th><th></th></tr></thead>
       <tbody>${rows.length ? rows.map(([r,i]) => `<tr data-row="${i}">
-        <td class="est"><span class="name" contenteditable="true" spellcheck="false" data-path="${tab.id}.rows.${i}">${esc(r.nome)}</span></td>
+        <td class="est"><span class="name" contenteditable="true" spellcheck="false" data-path="${tab.id}.rows.${i}">${esc(r.nome)}</span>${histLink(r)}</td>
         ${cols.map(k=>`<td class="chipcell">${chipBox(r.f[k], k, `${tab.id}.rows.${i}`)}</td>`).join('')}
         ${numCell(rowTeams(r,cols))}${numCell(rowEas(r),'eas')}<td class="num">${clsBadge(rowEas(r))}</td>
         <td class="act"><button class="del" data-del="${tab.id}.rows.${i}" title="Excluir estabelecimento">🗑</button></td></tr>`).join('')
@@ -433,7 +471,7 @@ function renderBlocos(tab){
       <div class="table-wrap"><table class="grid">${colgroup(b.cols.length,[96,34])}
         <thead><tr><th>Estabelecimento</th>${b.cols.map(k=>`<th>${COLS[k].l}</th>`).join('')}<th class="num">Qtde. Equipes</th><th></th></tr></thead>
         <tbody>${rows.map(([r,i])=>`<tr>
-          <td class="est"><span class="name" contenteditable="true" spellcheck="false" data-path="${p}.rows.${i}">${esc(r.nome)}</span></td>
+          <td class="est"><span class="name" contenteditable="true" spellcheck="false" data-path="${p}.rows.${i}">${esc(r.nome)}</span>${histLink(r)}</td>
           ${b.cols.map(k=>`<td class="chipcell">${chipBox(r.f[k],k,`${p}.rows.${i}`)}</td>`).join('')}
           ${numCell(rowTeams(r,b.cols))}
           <td class="act"><button class="del" data-del="${p}.rows.${i}" title="Excluir">🗑</button></td></tr>`).join('') || `<tr><td colspan="${b.cols.length+3}" class="empty">Nenhum resultado.</td></tr>`}</tbody>
@@ -450,7 +488,7 @@ function renderBlocos(tab){
   </div>`;
 }
 function legend(cols){
-  return `<div class="legend"><span>Digite e tecle <b>Enter</b> (ou vírgula) para criar um post-it · duplo clique edita · <b>⊘</b> desativa sem apagar (não conta) · <b>×</b> remove</span>
+  return `<div class="legend"><span>Digite e tecle <b>Enter</b> (ou vírgula) para criar um post-it · duplo clique edita · <b>⊘</b> desativa sem apagar (não conta) · <b>★</b> realça (continua contando) · <b>⇄</b> remaneja · <b>×</b> remove — nas equipes e unidades vinculadas, toda alteração pede o <b>motivo</b> e fica no 🕘 Histórico</span>
     ${cols.map(k=>`<span class="chip k-${k}"><span class="t">${COLS[k].l}</span></span>`).join('')}</div>`;
 }
 function render(keepFocus){
@@ -458,8 +496,9 @@ function render(keepFocus){
   $('#hComp').textContent = state.competencia;
   $('#comp').value = state.competencia;
   renderTabs();
-  $('#view').innerHTML = tab.tipo==='mapa' ? renderMapa(tab) : tab.tipo==='qrp' ? renderQrp() : tab.tipo==='imp' ? renderImp() : renderBlocos(tab);
-  $('#search').style.display = (tab.tipo==='qrp' || tab.tipo==='imp') ? 'none' : '';
+  _hc = histCount();
+  $('#view').innerHTML = tab.tipo==='mapa' ? renderMapa(tab) : tab.tipo==='qrp' ? renderQrp() : tab.tipo==='imp' ? renderImp() : tab.tipo==='hist' ? renderHist() : renderBlocos(tab);
+  $('#search').style.display = (tab.tipo==='qrp' || tab.tipo==='imp' || tab.tipo==='hist') ? 'none' : '';
   if (keepFocus){
     const box = document.querySelector(`.chipbox[data-path="${keepFocus.path}"][data-k="${keepFocus.k}"] input`);
     if (box) box.focus();
@@ -478,16 +517,21 @@ document.addEventListener('click', e => {
   const actBtn = e.target.closest('.chip button');
   if (actBtn){
     const box = actBtn.closest('.chipbox'), chip = actBtn.closest('.chip');
-    const arr = arrFor(box.dataset.path, box.dataset.k), i = +chip.dataset.i;
-    if (actBtn.dataset.act==='rm') arr.splice(i,1); else arr[i].off = !arr[i].off;
-    refresh(box.dataset.path, box.dataset.k); return;
+    acaoChip(box.dataset.path, box.dataset.k, +chip.dataset.i, actBtn.dataset.act); return;
   }
   const box = e.target.closest('.chipbox');
   if (box && !e.target.closest('.chip')) { box.querySelector('input').focus(); return; }
   const del = e.target.closest('[data-del]');
   if (del){
-    const parts = del.dataset.del.split('.'), i = +parts.pop(), arr = getAt(parts.join('.'));
-    if (confirm(`Excluir "${arr[i].nome}"?`)){ arr.splice(i,1); refresh(); toast('Estabelecimento excluído'); }
+    const parts = del.dataset.del.split('.'), i = +parts.pop(), arr = getAt(parts.join('.')), r = arr[i];
+    const nEq = Object.entries(r.f).filter(([k])=>isLog(k)).reduce((a,[,v])=>a+v.length,0);
+    pedirMotivo({titulo:'Excluir estabelecimento', tipo:'Exclusão', tipos:['Exclusão','Outros'], linhas:[`<b>${esc(tabNome(parts[0]))}</b> · ${esc(r.nome)}`, `Serão removidos ${nEq} registro(s) de equipes/unidades vinculadas.`]}).then(m => {
+      if (!m) return;
+      const eqs = Object.entries(r.f).filter(([k])=>isLog(k)).flatMap(([k,v]) => v.map(c => COLS[k].l+' '+c.v)).join(', ');
+      arr.splice(i,1);
+      logHist({tabId:parts[0], tab:tabNome(parts[0]), rowId:r.id, est:r.nome, col:'—', eq:'Estabelecimento', acao:m.tipo, de:eqs || '(sem equipes)', para:'(estabelecimento excluído)', motivo:m.motivo, resp:m.resp});
+      refresh(); toast('Exclusão registrada no histórico');
+    });
     return;
   }
   const add = e.target.closest('[data-add],[data-addb]');
@@ -508,13 +552,11 @@ document.addEventListener('keydown', e => {
   if (inp.matches('.chipbox > input')){
     const box = inp.parentElement, arr = arrFor(box.dataset.path, box.dataset.k);
     const isObs = box.dataset.k === 'obs';
-    if (e.key==='Enter' || (!isObs && e.key===',')){
+    if (e.key==='Enter' || (!isObs && !isLog(box.dataset.k) && e.key===',')){
       e.preventDefault();
       const vals = isObs ? [inp.value.trim()] : inp.value.split(/[,;/]/).map(s=>s.trim());
-      vals.filter(Boolean).forEach(v => arr.push({v}));
-      inp.value = '';
-      if (vals.some(Boolean)) refresh(box.dataset.path, box.dataset.k);
-    } else if (e.key==='Backspace' && !inp.value && arr.length){
+      incluirChips(box.dataset.path, box.dataset.k, vals, inp);
+    } else if (e.key==='Backspace' && !inp.value && arr.length && !isLog(box.dataset.k)){
       arr.pop(); refresh(box.dataset.path, box.dataset.k);
     }
   }
@@ -529,10 +571,10 @@ document.addEventListener('paste', e => {
   if (!inp.matches('.chipbox > input') || inp.parentElement.dataset.k==='obs') return;
   const txt = (e.clipboardData||window.clipboardData).getData('text');
   if (!/[,;/\n\t]/.test(txt)) return;
-  e.preventDefault(); inp.value = '';
-  const box = inp.parentElement, arr = arrFor(box.dataset.path, box.dataset.k);
-  txt.split(/[,;/\n\t]/).map(s=>s.trim()).filter(Boolean).forEach(v=>arr.push({v}));
-  refresh(box.dataset.path, box.dataset.k);
+  e.preventDefault();
+  const box = inp.parentElement;
+  inp.value = txt.split(/[,;/\n\t]/).map(s=>s.trim()).filter(Boolean).join(', ');
+  incluirChips(box.dataset.path, box.dataset.k, inp.value.split(',').map(s=>s.trim()), inp);
 });
 document.addEventListener('dblclick', e => {
   const t = e.target.closest('.chip .t'); if (!t) return;
@@ -540,8 +582,8 @@ document.addEventListener('dblclick', e => {
   const arr = arrFor(box.dataset.path, box.dataset.k);
   const ed = document.createElement('input'); ed.className='chip-edit'; ed.value = arr[i].v;
   t.replaceWith(ed); ed.focus(); ed.select();
-  ed.addEventListener('blur', () => {
-    if (!ed.dataset.cancel){ const v = ed.value.trim(); if (v) arr[i].v = v; else arr.splice(i,1); save(); }
+  ed.addEventListener('blur', async () => {
+    if (!ed.dataset.cancel) await editarChip(box.dataset.path, box.dataset.k, i, ed.value.trim());
     render();
   });
 });
@@ -549,9 +591,12 @@ document.addEventListener('focusout', e => {
   const n = e.target;
   if (n.matches('.name')){
     const r = getAt(n.dataset.path), v = n.textContent.trim().replace(/\s+/g,' ');
-    if (v && v !== r.nome){ r.nome = v.toUpperCase(); refresh(); } else if (!v) n.textContent = r.nome;
+    if (v && v !== r.nome){ const ant = r.nome; r.nome = v.toUpperCase();
+      if (ant !== 'NOVO ESTABELECIMENTO') logHist({tabId:n.dataset.path.split('.')[0], tab:tabNome(n.dataset.path), rowId:r.id, est:r.nome, col:'—', eq:'Nome', acao:'Alteração', de:ant, para:r.nome, motivo:'Alteração do nome do estabelecimento', resp:''});
+      else logHist({tabId:n.dataset.path.split('.')[0], tab:tabNome(n.dataset.path), rowId:r.id, est:r.nome, col:'—', eq:'Estabelecimento', acao:'Inclusão', de:'', para:r.nome, motivo:'Cadastro de novo estabelecimento no Gestor Mapeado', resp:''});
+      refresh(); } else if (!v) n.textContent = r.nome;
   }
-  if (n.matches('.chipbox > input') && n.value.trim()){
+  if (n.matches('.chipbox > input') && n.value.trim() && !isLog(n.parentElement.dataset.k)){
     const box = n.parentElement, arr = arrFor(box.dataset.path, box.dataset.k);
     (box.dataset.k==='obs' ? [n.value.trim()] : n.value.split(/[,;/]/).map(s=>s.trim())).filter(Boolean).forEach(v=>arr.push({v}));
     n.value=''; save(); setTimeout(()=>render(),0);
@@ -578,10 +623,11 @@ $('#impFile').onchange = e => {
   f.text().then(t => { const d = JSON.parse(t); if (!d.tabs) throw 0; state = hydrate(d); save(); render(); toast('Dados importados'); })
    .catch(() => toast('Arquivo inválido')); e.target.value='';
 };
-$('#reset').onclick = () => { if (confirm('Restaurar os dados originais da planilha? Todas as alterações feitas serão perdidas.')){ state = hydrate(SEED); state.seedVer = SEED_VER; save(); render(); toast('Dados originais restaurados'); } };
+$('#reset').onclick = () => { if (confirm('Restaurar os dados originais da planilha? As alterações nas tabelas serão perdidas; o histórico será mantido.')){ const h = state.hist || []; state = hydrate(SEED); state.seedVer = SEED_VER; state.hist = h;
+  logHist({tab:'—', est:'(todos)', col:'—', eq:'—', acao:'Outros', de:'', para:'Dados originais da planilha', motivo:'Restauração dos dados originais', resp:''}); save(); render(); toast('Dados originais restaurados (histórico mantido)'); } };
 
 /* ================= EXPORTAÇÃO ================= */
-const joinChips = a => (a||[]).map(c => c.off ? `${c.v} (desat.)` : c.v).join(', ') || '-';
+const joinChips = a => (a||[]).map(c => (c.hl ? '*' : '') + (c.off ? `${c.v} (desat.)` : c.v)).join(', ') || '-';
 function tableData(tab){
   // retorna lista de {titulo, head, body, foot, obs}
   const d = state.tabs[tab.id], out = [];
@@ -658,7 +704,7 @@ function exportPDF(tabs, nome){
 }
 const DATA_TABS = TABS.filter(t => t.tipo==='mapa' || t.tipo==='blocos');
 $('#pdfAll').onclick = () => exportPDF(DATA_TABS, `GESTOR_MAPEADO_${state.competencia}_TODAS_AS_ABAS.pdf`);
-$('#pdfOne').onclick = () => { const t = TABS.find(x=>x.id===current); if (t.tipo==='imp'){ impRun?.st==='done' ? impPDF() : toast('Execute a importação para gerar o relatório'); return; } if (t.tipo==='qrp'){ qrpFiles.filter(f=>!f.erro).length ? qrpPDF(qrpFiles.filter(f=>!f.erro)) : toast('Carregue um arquivo .qrp'); return; } exportPDF([t], `GESTOR_MAPEADO_${state.competencia}_${t.nome.replace(/[^A-Z0-9]+/gi,'_')}.pdf`); };
+$('#pdfOne').onclick = () => { const t = TABS.find(x=>x.id===current); if (t.tipo==='hist'){ histPDF(); return; } if (t.tipo==='imp'){ impRun?.st==='done' ? impPDF() : toast('Execute a importação para gerar o relatório'); return; } if (t.tipo==='qrp'){ qrpFiles.filter(f=>!f.erro).length ? qrpPDF(qrpFiles.filter(f=>!f.erro)) : toast('Carregue um arquivo .qrp'); return; } exportPDF([t], `GESTOR_MAPEADO_${state.competencia}_${t.nome.replace(/[^A-Z0-9]+/gi,'_')}.pdf`); };
 $('#xlsx').onclick = () => {
   if (!window.XLSX){ toast('Biblioteca Excel não carregou'); return; }
   const wb = XLSX.utils.book_new();
@@ -669,6 +715,7 @@ $('#xlsx').onclick = () => {
     ws['!cols'] = [{wch:52}, ...Array(8).fill({wch:28})];
     XLSX.utils.book_append_sheet(wb, ws, tab.nome.replace(/[\\/?*\[\]:]/g,'-').slice(0,31));
   });
+  if ((state.hist||[]).length){ const hs = XLSX.utils.aoa_to_sheet([HIST_HEAD, ...histRows((state.hist||[]).slice().reverse())]); hs['!cols']=[18,8,16,40,18,16,50,60,22].map(w=>({wch:w})); XLSX.utils.book_append_sheet(wb, hs, 'HISTORICO'); }
   XLSX.writeFile(wb, `GESTOR_MAPEADO_${state.competencia}.xlsx`);
 };
 
@@ -816,12 +863,8 @@ function analisar(f){
   add(6,'Destino', 'Município P. Gestão', d.destino||'não informado', norm(d.destino).replace(/\s+/g,' ')==='MUNICIPIO P. GESTAO',
     `Destino da exportação "${d.destino||'-'}". Refazer a exportação com destino "Município P. Gestão".`);
   if (f.porPasta){
-    const alvo = bckKey(d.arquivo), bs = f.bcks || [];
-    const igual = bs.find(b => bckKey(b) === alvo);
-    add(7,'Arquivo de base (.bck)', d.arquivo || 'informado no protocolo', bs.length ? bs.join(', ') : 'ausente na pasta', !!igual && !!alvo,
-      !bs.length ? `A pasta do envio não contém o arquivo de base (.bck). Reenviar a base ${d.arquivo||''} junto com o protocolo pelo Transmissor.` :
-      !igual ? `A base enviada (${bs.join(', ')}) não corresponde ao arquivo citado no protocolo (${d.arquivo||'-'}). Reenviar a base e o protocolo da MESMA exportação.` : null);
-    if (igual && bs.length > 1) res.avisos.push(`A pasta contém ${bs.length} arquivos .bck; apenas ${igual} corresponde ao protocolo.`);
+    const alvo = bckKey(d.arquivo), bs = f.bcks || [], igual = bs.find(b => bckKey(b) === alvo);
+    if (!igual) res.avisos.push(`A pasta não contém o .bck citado no protocolo (${d.arquivo||'-'}): este envio não poderá ser incluído na Importação (BCK).`);
     if ((f.qrpsNaPasta||1) > 1) res.avisos.push(`A pasta contém ${f.qrpsNaPasta} protocolos .qrp — cada um foi analisado separadamente.`);
   }
   if (f.pasta && f.pasta.padrao){
@@ -880,6 +923,33 @@ function analisar(f){
   return res;
 }
 
+/* --- críticas ignoradas (com motivo) --- */
+const ignKey = f => f.chave || f.nome;
+const ignDe = f => (state.qrpIgn || {})[ignKey(f)] || null;
+const envioOk = f => !f.erro && (analisar(f).ok || !!ignDe(f));
+async function ignorarCriticas(f){
+  const r = analisar(f), ign = ignDe(f), nome = qName(f, r), tabN = r.x ? r.x.tab.nome : (f.pasta?.distrito || '-');
+  const ident = f.pasta?.padrao ? `ID ${f.pasta.id} · ` : '';
+  if (ign){
+    const m = await pedirMotivo({titulo:'Reconsiderar críticas', tipo:'Críticas reconsideradas', tipos:['Críticas reconsideradas'],
+      linhas:[`<b>${esc(tabN)}</b> · ${ident}${esc(nome)}`, 'O envio volta a ser avaliado pelas críticas e ficará <b>REJEITADO</b>.']});
+    if (!m) return;
+    delete state.qrpIgn[ignKey(f)];
+    logHist({tab:tabN, rowId:r.x?.row.id, est:nome, col:'—', eq:`QRP ${ident}${f.pasta?.envio||''}`.trim(), acao:m.tipo, de:'VALIDADO (críticas ignoradas)', para:'REJEITADO', motivo:m.motivo, resp:m.resp});
+  } else {
+    const lista = r.criticas.filter(k=>!k.ok).map(k=>`${k.n}. ${k.nome}`);
+    const m = await pedirMotivo({titulo:'Ignorar críticas e validar o envio', tipo:'Críticas ignoradas', tipos:['Críticas ignoradas'],
+      linhas:[`<b>${esc(tabN)}</b> · ${ident}${esc(nome)}`, `Críticas: <b>${esc(lista.join('; ') || '—')}</b>`, `${r.apont.length} apontamento(s) serão desconsiderados e o envio ficará <b>VALIDADO</b>.`]});
+    if (!m) return;
+    state.qrpIgn = state.qrpIgn || {};
+    state.qrpIgn[ignKey(f)] = {motivo:m.motivo, resp:m.resp, ts:new Date().toISOString(), criticas:lista, apont:r.apont.length};
+    logHist({tab:tabN, rowId:r.x?.row.id, est:nome, col:'—', eq:`QRP ${ident}${f.pasta?.envio||''}`.trim(), acao:m.tipo,
+      de:`REJEITADO (${lista.join('; ') || r.apont.length+' apontamento(s)'})`, para:'VALIDADO', motivo:m.motivo, resp:m.resp});
+  }
+  save(); render(); toast('Registrado no histórico');
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-qign]'); if (b){ const f = qrpFiles.find(q=>q.id===b.dataset.qign); if (f) ignorarCriticas(f); } });
+
 /* --- interface --- */
 const ST = {ok:['✔','Confere','ok'], extra:['▲','Só no protocolo','warn'], falta:['▼','Não exportada','bad'], off:['⊘','Desativada no Gestor','warn'], tipo:['≠','Tipo divergente','warn'], na:['–','Sem vínculo','muted']};
 function rowOptions(sel){
@@ -913,7 +983,7 @@ function qVisible(list){
   return out.filter(f => {
     if (qf.dist && (f.pasta?.distrito||'') !== qf.dist) return false;
     if (qf.envio==='FINAL' || qf.envio==='PRÉVIA') if ((f.pasta?.envio||'') !== qf.envio) return false;
-    if (qf.st){ const ok = !f.erro && analisar(f).ok; if (qf.st==='V' && !ok) return false; if (qf.st==='R' && ok) return false; }
+    if (qf.st){ const ok = envioOk(f); if (qf.st==='V' && !ok) return false; if (qf.st==='R' && ok) return false; }
     if (qf.q){ const q = norm(qf.q); const hay = norm([f.nome, f.pasta?.raw, f.pasta?.id, qName(f), f.data?.arquivo, ...(f.data?.estabelecimentos||[]).map(e=>e.cnes+' '+e.nome)].join(' ')); if (!hay.includes(q)) return false; }
     return true;
   });
@@ -926,15 +996,16 @@ function renderQrp(){
       <div class="qacts"><button class="del" data-qrm="${f.id}" title="Remover">🗑</button></div></div></div>`;
     const d = f.data, r = analisar(f);
     const gestNome = r.x ? r.x.row.nome : null;
-    return `<div class="qcard ${r.ok?'good':'bad'}${f.open?' open':''}">
+    const ign = !r.ok ? ignDe(f) : null, okv = r.ok || !!ign;
+    return `<div class="qcard ${okv?(ign?'ign':'good'):'bad'}${f.open?' open':''}">
       <div class="qhead">
         <button class="qtoggle" data-qopen="${f.id}" aria-expanded="${!!f.open}" title="${f.open?'Ocultar':'Exibir'} análise">
           <span class="chev">▸</span>
           ${qIdent(f)}
           <span class="qest">${esc(qName(f, r))}</span>
           ${qEnvio(f)}
-          <span class="qstatus ${r.ok?'good':'bad'}">${r.ok?'✔ VALIDADO':'✖ REJEITADO'}</span>
-          ${!r.ok ? `<span class="qcount">${r.nCrit} crítica(s) · ${r.apont.length} apontamento(s)</span>` : ''}
+          <span class="qstatus ${okv?(ign?'ign':'good'):'bad'}">${okv?'✔ VALIDADO':'✖ REJEITADO'}</span>
+          ${ign ? `<span class="qcount ign">críticas ignoradas</span>` : !r.ok ? `<span class="qcount">${r.nCrit} crítica(s) · ${r.apont.length} apontamento(s)</span>` : ''}
           ${f.pasta?.data ? `<span class="qcount">enviado ${esc(f.pasta.data)}</span>` : ''}
         </button>
         <div class="qacts">
@@ -956,6 +1027,12 @@ function renderQrp(){
         <tbody>${r.criticas.map(k=>`<tr><td>${k.n}</td><td><b>${k.nome}</b></td><td>${esc(k.esperado)}</td><td>${esc(k.obtido)}</td>
           <td class="num"><span class="pill ${k.ok?'ok':'bad'}">${k.ok?'✔ OK':'✖ CRÍTICA'}</span></td></tr>`).join('')}</tbody>
       </table></div>
+      ${ign ? `<div class="apont ignbox"><h4>Críticas ignoradas — envio VALIDADO com ressalva</h4>
+          <div>${esc(ign.criticas.join('; ') || ign.apont+' apontamento(s)')}</div>
+          <div style="margin-top:6px"><b>Motivo:</b> ${esc(ign.motivo)}</div>
+          <div class="qcount" style="margin-top:4px">Registrado por ${esc(ign.resp||'—')} em ${fmtTs(ign.ts)} · consta no 🕘 Histórico</div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:8px" data-qign="${f.id}">↺ Reconsiderar críticas</button></div>`
+        : !r.ok ? `<div class="ignbar"><span>Após a análise, se as críticas não procederem, é possível validar o envio registrando o motivo.</span><button class="btn btn-warn btn-sm" data-qign="${f.id}">Ignorar críticas e validar…</button></div>` : ''}
       ${r.apont.length ? `<div class="apont"><h4>Apontamentos para correção</h4><ol>${r.apont.map(a=>`<li>${esc(a)}</li>`).join('')}</ol></div>` : `<div class="apont good"><h4>Nenhuma correção necessária</h4>O protocolo está de acordo com o Gestor Mapeado e com as críticas do Transmissor DID.</div>`}
       ${r.avisos.length ? `<div class="apont aviso"><h4>Observações (não bloqueiam a validação)</h4><ul>${r.avisos.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div>` : ''}
       <div class="qgrid">
@@ -968,7 +1045,7 @@ function renderQrp(){
       </div></div>` : ''}
     </div>`;
   }).join('');
-  const all = qrpFiles.map(f => !f.erro && analisar(f).ok), ok = all.filter(Boolean).length;
+  const all = qrpFiles.map(envioOk), ok = all.filter(Boolean).length;
   const dists = [...new Set(qrpFiles.map(f=>f.pasta?.distrito).filter(Boolean))].sort();
   return `<div class="section">
     <div class="section-head"><div><h3>Validação de Protocolos QRP — Transmissor DID</h3>
@@ -1186,8 +1263,9 @@ function qrpPDF(files){
     let y = 30;
     doc.setTextColor(15,23,42); doc.setFont('helvetica','bold'); doc.setFontSize(12);
     const tl = doc.splitTextToSize(qName(f, r), W-74); doc.text(tl, 12, y);
-    const st = r.ok ? 'VALIDADO' : 'REJEITADO';
-    doc.setFillColor(...(r.ok?colors.ok:colors.bad)); doc.roundedRect(W-58, y-5.5, 46, 8, 4, 4, 'F');
+    const ign = !r.ok ? ignDe(f) : null, okv = r.ok || !!ign;
+    const st = okv ? 'VALIDADO' : 'REJEITADO';
+    doc.setFillColor(...(okv ? (ign ? [217,119,6] : colors.ok) : colors.bad)); doc.roundedRect(W-58, y-5.5, 46, 8, 4, 4, 'F');
     doc.setTextColor(255); doc.setFontSize(9); doc.text(st, W-35, y-0.3, {align:'center'});
     y += 5*tl.length + 1;
     doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(51,65,85);
@@ -1209,6 +1287,10 @@ function qrpPDF(files){
       didDrawPage: header
     });
     y = doc.lastAutoTable.finalY + 8;
+    if (ign){ doc.setFillColor(255,251,235); doc.setDrawColor(253,230,138);
+      const txt = doc.splitTextToSize(`CRÍTICAS IGNORADAS — envio validado com ressalva. Motivo: ${ign.motivo}  (registrado por ${ign.resp||'-'} em ${fmtTs(ign.ts)})`, W-30);
+      doc.roundedRect(12, y-4, W-24, txt.length*4.2+4, 2, 2, 'FD'); doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(146,64,14);
+      doc.text(txt, 15, y+0.5); y += txt.length*4.2 + 6; }
     if (r.avisos.length){ doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(146,64,14);
       r.avisos.forEach(a => { const l = doc.splitTextToSize('Obs.: '+a, W-24); doc.text(l, 12, y); y += l.length*4 + 1; }); y += 3; }
     doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(3,75,117);
@@ -1231,7 +1313,7 @@ function qrpPDF(files){
     };
     sec(`EQUIPES — protocolo: ${d.totalEq}  ·  Gestor Mapeado: ${r.criticas[4].esperado}`, ['Equipe','CNES - Área','Tipo','Gestor Mapeado','Situação'], r.equipes.map(e=>[e.nome,e.ine,e.tipo,e.gestor,ST[e.st][1]]));
     sec(`ESTABELECIMENTOS — protocolo: ${d.totalEst}  ·  Gestor Mapeado: ${r.criticas[3].esperado}`, ['CNES','Estabelecimento','Gestor Mapeado','Situação'], r.ests.map(e=>[e.cnes,e.nome,e.gestor,ST[e.st][1]]));
-    if (!r.ok && y < H-40){ y += 6; doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(100,116,139);
+    if (!okv && y < H-40){ y += 6; doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(100,116,139);
       doc.text(doc.splitTextToSize('Após as correções, gerar nova exportação COMPLETA no SCNES (destino Município P. Gestão) e reenviar a base (.bck) com o protocolo (.qrp) pelo Transmissor DID.', W-24), 12, y); }
   });
   const n = doc.getNumberOfPages(), stamp = new Date().toLocaleString('pt-BR');
@@ -1249,7 +1331,7 @@ let impRun = null;        // {st:'run'|'done', raiz, itens:[{f, nome, tam, st, m
 const fmtBytes = n => n==null ? '—' : n < 1024 ? n+' B' : n < 1048576 ? (n/1024).toFixed(1)+' KB' : (n/1048576).toFixed(2)+' MB';
 function bckDoEnvio(f){ const alvo = bckKey(f.data?.arquivo); return (f.bcks||[]).find(b => bckKey(b) === alvo) || null; }
 function impCandidatos(){
-  const val = qrpFiles.filter(f => !f.erro && f.porPasta && analisar(f).ok && bckDoEnvio(f));
+  const val = qrpFiles.filter(f => f.porPasta && envioOk(f) && bckDoEnvio(f));
   // envio mais recente validado por estabelecimento
   const last = {};
   val.forEach(f => { const k = f.matchId || estKey(qName(f)), o = f.pasta?.ord || '';
@@ -1260,8 +1342,8 @@ function impCandidatos(){
 }
 const impMarcado = c => impSel[c.f.id] ?? c.recente;
 function renderImp(){
-  const cands = impCandidatos(), rej = qrpFiles.filter(f => f.erro || !analisar(f).ok).length;
-  const semPasta = qrpFiles.filter(f => !f.erro && !f.porPasta && analisar(f).ok).length;
+  const cands = impCandidatos(), rej = qrpFiles.filter(f => !envioOk(f)).length;
+  const semPasta = qrpFiles.filter(f => !f.porPasta && envioOk(f)).length;
   const sel = cands.filter(impMarcado), suporte = !!window.showDirectoryPicker;
   const tot = sel.reduce((a,c) => a + (c.f.bckSz?.[c.bck] || 0), 0);
   const ST_IMP = {wait:['muted','Aguardando'], copy:['warn','Copiando'], ver:['warn','Verificando'], ok:['ok','✔ Copiado e verificado'], same:['ok','↺ Já existia (idêntico)'], err:['bad','✖ Erro']};
@@ -1421,6 +1503,200 @@ document.addEventListener('change', e => {
 document.addEventListener('click', e => {
   if (e.target.id==='impGo'){ executarImportacao(); }
   if (e.target.id==='impPdf'){ impPDF(); }
+});
+
+/* ================= HISTÓRICO DE ALTERAÇÕES (motivo obrigatório) ================= */
+const LOG_COLS = ['esf','eap','eapp','esb','emulti','ecr','vinc'];
+const isLog = k => LOG_COLS.includes(k);
+const ACOES = ['Inclusão','Alteração','Desativação','Reativação','Remanejamento','Realce','Remoção de realce','Exclusão','Críticas ignoradas','Críticas reconsideradas','Outros'];
+let histF = {q:'', tab:'', acao:'', row:''};
+const tabNome = path => (TABS.find(t => t.id === String(path).split('.')[0]) || {}).nome || '-';
+const fmtTs = ts => new Date(ts).toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+function logHist(e){
+  state.hist = state.hist || [];
+  state.hist.push(Object.assign({id:uid(), ts:new Date().toISOString(), comp:state.competencia}, e));
+}
+function histCount(){ const m = {}; (state.hist||[]).forEach(h => { if (h.rowId) m[h.rowId]=(m[h.rowId]||0)+1; if (h.rowId2) m[h.rowId2]=(m[h.rowId2]||0)+1; }); return m; }
+let _hc = {};
+function histLink(r){ const n = _hc[r.id]; return n ? `<button class="hlink" data-hrow="${r.id}" title="Ver histórico deste estabelecimento">🕘 ${n} registro${n>1?'s':''}</button>` : ''; }
+
+/* --- janela de motivo --- */
+function pedirMotivo(o){
+  return new Promise(resolve => {
+    let resp = ''; try { resp = localStorage.getItem(KEY+'.resp') || ''; } catch(_){}
+    const wrap = document.createElement('div'); wrap.className = 'modal';
+    const tipos = o.tipos || ACOES.filter(a => !/Críticas|realce|Realce/.test(a));
+    wrap.innerHTML = `<div class="mbox" role="dialog" aria-modal="true">
+      <div class="mhead">${esc(o.titulo || 'Registrar motivo da alteração')}</div>
+      <div class="mres">${o.linhas.map(l => `<div>${l}</div>`).join('')}</div>
+      ${o.remanejar ? `<label class="mlab">Remanejar para o estabelecimento<select id="mDest">${rowOptions('')}</select></label>
+        <label class="mlab">Coluna de destino<select id="mCol"></select></label>` : ''}
+      <label class="mlab">Tipo de alteração<select id="mTipo">${tipos.map(t => `<option${t===o.tipo?' selected':''}>${t}</option>`).join('')}</select></label>
+      <label class="mlab"><span>Motivo <span class="req">*</span></span><textarea id="mMot" rows="3" placeholder="Descreva o motivo (ex.: equipe desativada no SCNES por falta de profissional; remanejada conforme memorando nº…)"></textarea></label>
+      <label class="mlab">Responsável<input id="mResp" value="${esc(resp)}" placeholder="Nome de quem registra"></label>
+      <div class="merr" id="mErr"></div>
+      <div class="mfoot"><button class="btn btn-danger-ghost" id="mNo">Cancelar</button><button class="btn btn-success" id="mOk">Confirmar e registrar</button></div>
+    </div>`;
+    document.body.appendChild(wrap);
+    const q = s => wrap.querySelector(s);
+    const fillCols = () => {
+      const x = findRow(q('#mDest').value), cs = x ? x.cols.filter(isLog) : [];
+      q('#mCol').innerHTML = cs.map(c => `<option value="${c}"${c===o.remanejar.k?' selected':''}>${COLS[c].l}</option>`).join('') || '<option value="">—</option>';
+    };
+    if (o.remanejar){ q('#mDest').addEventListener('change', fillCols); fillCols(); }
+    const close = v => { wrap.remove(); document.removeEventListener('keydown', onKey, true); resolve(v); };
+    const onKey = ev => { if (ev.key==='Escape'){ ev.stopPropagation(); close(null); } };
+    document.addEventListener('keydown', onKey, true);
+    q('#mNo').onclick = () => close(null);
+    wrap.addEventListener('mousedown', ev => { if (ev.target === wrap) close(null); });
+    q('#mOk').onclick = () => {
+      const motivo = q('#mMot').value.trim(), r = q('#mResp').value.trim();
+      if (motivo.length < 5){ q('#mErr').textContent = 'Informe o motivo (mínimo 5 caracteres).'; q('#mMot').focus(); return; }
+      if (o.remanejar){
+        const d = q('#mDest').value, c = q('#mCol').value;
+        if (!d || !c){ q('#mErr').textContent = 'Selecione o estabelecimento e a coluna de destino.'; return; }
+        if (d === o.remanejar.rowId && c === o.remanejar.k){ q('#mErr').textContent = 'O destino é igual à origem.'; return; }
+      }
+      try { localStorage.setItem(KEY+'.resp', r); } catch(_){}
+      close({tipo:q('#mTipo').value, motivo, resp:r, dest: o.remanejar ? q('#mDest').value : null, col: o.remanejar ? q('#mCol').value : null});
+    };
+    setTimeout(() => q('#mMot').focus(), 30);
+  });
+}
+function ctxChip(path, k){ const row = getAt(path); return {row, tab:tabNome(path), col:COLS[k]?.l || k}; }
+const linhaCtx = (c, extra) => `<b>${esc(c.tab)}</b> · ${esc(c.row.nome)} · <b>${esc(c.col)}</b>${extra?' · '+extra:''}`;
+
+async function incluirChips(path, k, vals, inp){
+  vals = vals.filter(Boolean); if (!vals.length) return;
+  const arr = arrFor(path, k);
+  if (!isLog(k)){ vals.forEach(v => arr.push({v})); if (inp) inp.value=''; refresh(path, k); return; }
+  const c = ctxChip(path, k);
+  const m = await pedirMotivo({tipo:'Inclusão', linhas:[linhaCtx(c), `Incluir: <b>${vals.map(esc).join(', ')}</b>`]});
+  if (!m){ inp && inp.focus(); return; }
+  const mot = {acao:m.tipo, motivo:m.motivo, ts:new Date().toISOString()};
+  vals.forEach(v => { arr.push({v, mot}); logHist({tabId:path.split('.')[0], tab:c.tab, rowId:c.row.id, est:c.row.nome, col:c.col, eq:v, acao:m.tipo, de:'', para:v, motivo:m.motivo, resp:m.resp}); });
+  if (inp) inp.value = '';
+  refresh(path, k); toast('Inclusão registrada no histórico');
+}
+async function acaoChip(path, k, i, act){
+  const arr = arrFor(path, k), ch = arr[i];
+  if (!isLog(k)){ if (act==='rm') arr.splice(i,1); else if (act==='toggle') ch.off = !ch.off; else if (act==='hl') ch.hl = !ch.hl; refresh(path,k); return; }
+  const c = ctxChip(path, k);
+  if (act === 'mv'){
+    const m = await pedirMotivo({titulo:'Remanejar equipe', tipo:'Remanejamento', tipos:['Remanejamento','Outros'], linhas:[linhaCtx(c, `Equipe <b>${esc(ch.v)}</b>`)], remanejar:{k, rowId:c.row.id}});
+    if (!m) return;
+    const dx = findRow(m.dest); arr.splice(i,1);
+    ch.mot = {acao:m.tipo, motivo:m.motivo, ts:new Date().toISOString()};
+    (dx.row.f[m.col] = dx.row.f[m.col] || []).push(ch);
+    logHist({tabId:path.split('.')[0], tab:c.tab, rowId:c.row.id, est:c.row.nome, col:c.col, eq:ch.v, acao:m.tipo,
+      de:`${c.row.nome} (${c.col})`, para:`${dx.row.nome} (${COLS[m.col].l}) — ${dx.tab.nome}`, motivo:m.motivo, resp:m.resp, rowId2:dx.row.id, est2:dx.row.nome});
+    refresh(); toast('Remanejamento registrado no histórico'); return;
+  }
+  if (act === 'hl'){
+    const tipo = ch.hl ? 'Remoção de realce' : 'Realce';
+    const m = await pedirMotivo({titulo: ch.hl ? 'Remover realce da equipe' : 'Realçar equipe', tipo, tipos:[tipo,'Outros'],
+      linhas:[linhaCtx(c, `Equipe <b>${esc(ch.v)}</b>`), ch.hl ? 'A equipe deixa de ficar destacada.' : 'A equipe fica destacada e <b>continua contando</b> na quantidade.']});
+    if (!m) return;
+    ch.hl = !ch.hl; ch.mot = {acao:m.tipo, motivo:m.motivo, ts:new Date().toISOString()};
+    logHist({tabId:path.split('.')[0], tab:c.tab, rowId:c.row.id, est:c.row.nome, col:c.col, eq:ch.v, acao:m.tipo,
+      de: ch.hl ? 'Sem realce' : 'Realçada', para: ch.hl ? 'Realçada' : 'Sem realce', motivo:m.motivo, resp:m.resp});
+    refresh(path, k); toast(`${m.tipo} registrado no histórico`); return;
+  }
+  const tipo = act==='rm' ? 'Exclusão' : ch.off ? 'Reativação' : 'Desativação';
+  const m = await pedirMotivo({tipo, linhas:[linhaCtx(c, `Equipe <b>${esc(ch.v)}</b>`), `Ação: <b>${tipo}</b>`]});
+  if (!m) return;
+  if (act==='rm') arr.splice(i,1);
+  else { ch.off = !ch.off; ch.mot = {acao:m.tipo, motivo:m.motivo, ts:new Date().toISOString()}; }
+  logHist({tabId:path.split('.')[0], tab:c.tab, rowId:c.row.id, est:c.row.nome, col:c.col, eq:ch.v, acao:m.tipo,
+    de: act==='rm' ? ch.v : (ch.off ? 'Ativa' : 'Desativada'), para: act==='rm' ? '(removida)' : (ch.off ? 'Desativada' : 'Ativa'), motivo:m.motivo, resp:m.resp});
+  refresh(path, k); toast(`${m.tipo} registrada no histórico`);
+}
+async function editarChip(path, k, i, novo){
+  const arr = arrFor(path, k), ch = arr[i], antigo = ch.v;
+  if (novo === antigo) return;
+  if (!isLog(k)){ if (novo) ch.v = novo; else arr.splice(i,1); save(); return; }
+  const c = ctxChip(path, k);
+  const tipo = novo ? 'Alteração' : 'Exclusão';
+  const m = await pedirMotivo({tipo, linhas:[linhaCtx(c), novo ? `Alterar <b>${esc(antigo)}</b> → <b>${esc(novo)}</b>` : `Excluir <b>${esc(antigo)}</b>`]});
+  if (!m) return;
+  if (novo){ ch.v = novo; ch.mot = {acao:m.tipo, motivo:m.motivo, ts:new Date().toISOString()}; } else arr.splice(i,1);
+  logHist({tabId:path.split('.')[0], tab:c.tab, rowId:c.row.id, est:c.row.nome, col:c.col, eq:novo||antigo, acao:m.tipo, de:antigo, para:novo||'(removida)', motivo:m.motivo, resp:m.resp});
+  save(); toast(`${m.tipo} registrada no histórico`);
+}
+
+/* --- aba Histórico --- */
+function histVisiveis(){
+  const q = norm(histF.q);
+  return (state.hist||[]).slice().reverse().filter(h => {
+    if (histF.row && h.rowId !== histF.row && h.rowId2 !== histF.row) return false;
+    if (histF.tab && h.tab !== histF.tab) return false;
+    if (histF.acao && h.acao !== histF.acao) return false;
+    if (q && !norm([h.est,h.est2,h.eq,h.col,h.motivo,h.resp,h.de,h.para,h.comp].join(' ')).includes(q)) return false;
+    return true;
+  });
+}
+function renderHist(){
+  const all = state.hist || [], vis = histVisiveis();
+  const tabs = [...new Set(all.map(h=>h.tab))].sort(), fr = histF.row ? (findRow(histF.row)?.row.nome || all.find(h=>h.rowId===histF.row)?.est) : null;
+  const porAcao = ACOES.map(a => [a, all.filter(h=>h.acao===a).length]).filter(x=>x[1]);
+  return `<div class="section">
+    <div class="section-head"><div><h3>Histórico de alterações nas equipes</h3>
+      <div class="sub">Toda inclusão, alteração, desativação, reativação, remanejamento ou exclusão de equipe/unidade vinculada é registrada com o motivo, para consulta</div></div></div>
+    <div class="kpis"><div class="kpi main"><div class="l">Registros</div><div class="v">${all.length}</div></div>
+      ${porAcao.map(([a,n]) => `<div class="kpi"><div class="l">${a}</div><div class="v">${n}</div></div>`).join('')}</div>
+    <div class="qfilters" style="margin:0 0 14px">
+      <input class="search" id="hq" type="search" placeholder="Buscar estabelecimento, equipe, motivo, responsável…" value="${esc(histF.q)}">
+      <select id="ht"><option value="">Todos os distritos</option>${tabs.map(t=>`<option${histF.tab===t?' selected':''}>${esc(t)}</option>`).join('')}</select>
+      <select id="ha"><option value="">Todas as ações</option>${ACOES.map(a=>`<option${histF.acao===a?' selected':''}>${a}</option>`).join('')}</select>
+      ${fr ? `<span class="qtab" style="font-size:12px">Estabelecimento: ${esc(fr)} <button class="hclr" id="hrowClr" title="Limpar">×</button></span>` : ''}
+      <span class="sep"></span><span class="qcount">${vis.length} de ${all.length}</span>
+      <button class="btn btn-success btn-sm" id="hPdf">⬇ PDF</button><button class="btn btn-ghost btn-sm" id="hXls">Excel</button>
+    </div>
+    <div class="table-wrap"><table class="qt hist">
+      <thead><tr><th>Data / hora</th><th>Comp.</th><th>Distrito</th><th>Estabelecimento</th><th>Equipe</th><th>Ação</th><th>De → Para</th><th>Motivo</th><th>Responsável</th></tr></thead>
+      <tbody>${vis.map(h => `<tr>
+        <td style="white-space:nowrap">${fmtTs(h.ts)}</td><td>${esc(fmtComp(h.comp))}</td><td>${esc(h.tab)}</td>
+        <td><b>${esc(h.est)}</b>${h.est2?`<div class="qcount">→ ${esc(h.est2)}</div>`:''}</td>
+        <td>${h.col && h.col!=='—' ? `<span class="chip k-${Object.keys(COLS).find(k=>COLS[k].l===h.col)||'esf'}"><span class="t">${esc(h.col)} ${esc(h.eq)}</span></span>` : esc(h.eq||'—')}</td>
+        <td><span class="pill ${/Exclus|Desativ/.test(h.acao)?'bad':/Inclus|Reativ/.test(h.acao)?'ok':'warn'}">${esc(h.acao)}</span></td>
+        <td>${esc(h.de||'—')} → ${esc(h.para||'—')}</td><td style="min-width:220px">${esc(h.motivo)}</td><td>${esc(h.resp||'—')}</td></tr>`).join('')
+        || `<tr><td colspan="9" class="empty">${all.length ? 'Nenhum registro para os filtros.' : 'Nenhuma alteração registrada ainda. As alterações feitas nas equipes aparecerão aqui com o motivo informado.'}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+const histRows = l => l.map(h => [fmtTs(h.ts), fmtComp(h.comp), h.tab, h.est + (h.est2?' -> '+h.est2:''), (h.col&&h.col!=='—'?h.col+' ':'')+(h.eq||''), h.acao, `${h.de||'-'} -> ${h.para||'-'}`, h.motivo, h.resp||'-']);
+const HIST_HEAD = ['Data/hora','Comp.','Distrito','Estabelecimento','Equipe','Ação','De -> Para','Motivo','Responsável'];
+function histPDF(){
+  const l = histVisiveis(); if (!l.length){ toast('Nenhum registro para exportar'); return; }
+  if (!window.jspdf){ toast('Biblioteca de PDF não carregou'); return; }
+  const { jsPDF } = window.jspdf, doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+  const header = () => { doc.setFillColor(7,46,80); doc.rect(0,0,W,20,'F'); doc.setFillColor(3,75,117); doc.rect(W/2,0,W/2,20,'F');
+    doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text('HISTÓRICO DE ALTERAÇÕES NAS EQUIPES', 12, 9);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(165,208,245); doc.text('GESTOR MAPEADO · SECRETARIA MUNICIPAL DE SAÚDE - SEMSA', 12, 15); };
+  header();
+  doc.autoTable({ startY:26, margin:{left:8,right:8,top:24}, theme:'grid', head:[HIST_HEAD], body:histRows(l),
+    styles:{fontSize:7, cellPadding:1.5, lineColor:[203,213,225], lineWidth:.15, textColor:[15,23,42], overflow:'linebreak'},
+    headStyles:{fillColor:[3,75,117], textColor:255}, columnStyles:{0:{cellWidth:24},1:{cellWidth:13},2:{cellWidth:22},3:{cellWidth:42},4:{cellWidth:24},5:{cellWidth:22,fontStyle:'bold'},6:{cellWidth:46},8:{cellWidth:24}},
+    didDrawPage: header });
+  const n = doc.getNumberOfPages();
+  for (let i=1;i<=n;i++){ doc.setPage(i); doc.setFontSize(7); doc.setTextColor(100,116,139); doc.text(`DID · Diretoria de Inteligência de Dados — SEMSA Manaus · emitido em ${new Date().toLocaleString('pt-BR')}`, 8, H-6); doc.text(`Página ${i} de ${n}`, W-8, H-6, {align:'right'}); }
+  doc.save(`HISTORICO_GESTOR_MAPEADO_${state.competencia}.pdf`);
+}
+function histXLS(){
+  if (!window.XLSX){ toast('Biblioteca Excel não carregou'); return; }
+  const wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet([HIST_HEAD, ...histRows(histVisiveis())]);
+  ws['!cols'] = [18,8,16,40,18,16,50,60,22].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws, 'HISTORICO'); XLSX.writeFile(wb, `HISTORICO_GESTOR_MAPEADO_${state.competencia}.xlsx`);
+}
+document.addEventListener('input', e => { if (e.target.id==='hq'){ histF.q = e.target.value; const p=e.target.selectionStart; render(); const n=$('#hq'); n.focus(); try{n.setSelectionRange(p,p);}catch(_){} } });
+document.addEventListener('change', e => { if (e.target.id==='ht'){ histF.tab = e.target.value; render(); } if (e.target.id==='ha'){ histF.acao = e.target.value; render(); } });
+document.addEventListener('click', e => {
+  const hl = e.target.closest('[data-hrow]');
+  if (hl){ histF = {q:'', tab:'', acao:'', row:hl.dataset.hrow}; current = 'hist'; render(); window.scrollTo({top:0}); return; }
+  if (e.target.id==='hrowClr'){ histF.row = ''; render(); }
+  if (e.target.id==='hPdf') histPDF();
+  if (e.target.id==='hXls') histXLS();
 });
 
 /* ================= INÍCIO ================= */
