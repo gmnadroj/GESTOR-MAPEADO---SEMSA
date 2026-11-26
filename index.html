@@ -100,10 +100,16 @@ tfoot input:focus{border-color:#fff;background:rgba(255,255,255,.22)}
 .chipbox:hover,.chipbox:focus-within{border-color:var(--line2);background:#fbfdff}
 .chip{--c:#fef9c3;--b:#eab308;display:inline-flex;align-items:center;gap:3px;background:var(--c);border-left:3px solid var(--b);color:#1e293b;font-size:11.5px;font-weight:700;padding:3px 4px 3px 7px;border-radius:3px 6px 6px 3px;box-shadow:0 1px 2px rgba(0,0,0,.12);line-height:1.3;max-width:100%;word-break:break-word;}
 @keyframes pop{from{transform:scale(.8);opacity:0}to{transform:none;opacity:1}}
-.chip .t{cursor:default}
+.chip .t{cursor:default;white-space:nowrap}
+.chip{flex-wrap:wrap;row-gap:1px}
 .chip button{background:none;border:none;cursor:pointer;color:#64748b;font-size:12px;line-height:1;padding:1px 3px;border-radius:4px;opacity:.55}
 .chip button:hover{opacity:1;background:rgba(0,0,0,.08);color:var(--ink)}
 .chip.off{opacity:.55;text-decoration:line-through;filter:grayscale(1)}
+.chip.off.conta{text-decoration:none;font-style:italic;opacity:.85;filter:grayscale(.6);outline:1.5px dashed #64748b;outline-offset:-1px}
+.ctag{white-space:nowrap;font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.4px;background:#334155;color:#fff;border-radius:4px;padding:1px 4px;margin-left:4px;text-decoration:none;display:inline-block}
+.mrad{display:flex;gap:8px;align-items:flex-start;text-transform:none;letter-spacing:0;font-weight:500;font-size:13px;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer}
+.mrad:has(input:checked){border-color:var(--sky);background:#e8f5fd}
+.mrad input{margin-top:2px;accent-color:var(--sky)}
 .k-esf{--c:#dbeafe;--b:#2563eb}.k-eap,.k-eapp{--c:#dcfce7;--b:#16a34a}.k-esb{--c:#ede9fe;--b:#7c3aed}
 .k-emulti{--c:#fef3c7;--b:#d97706}.k-ecr{--c:#fce7f3;--b:#db2777}.k-vinc{--c:#ccfbf1;--b:#0d9488}
 .chipbox input{border:none;outline:none;background:transparent;font-size:12px;min-width:60px;flex:1;padding:4px 2px;color:var(--ink)}
@@ -223,6 +229,9 @@ table.hist td{font-size:12px}
 .ccount{position:absolute;top:2px;left:4px;font-size:10.5px;font-weight:900;color:var(--navy2);background:#e0f2fe;border-radius:9999px;padding:1px 8px;line-height:15px;font-variant-numeric:tabular-nums}
 .ccount.z{background:#f1f5f9;color:#94a3b8}
 .ccount small{font-size:9px;font-weight:700;color:#94a3b8;margin-left:4px}
+.qanal{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--muted);margin:-4px 0 12px;padding-left:10px;border-left:3px solid var(--line)}
+.qanal .cur{color:var(--ink);font-weight:600}
+.qanal b.v{color:#059669}.qanal b.r{color:#be123c}
 .btn-warn{background:#d97706;color:#fff}.btn-warn:hover{background:#b45309}
 .ignbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:#fffbeb;border:1px dashed #fcd34d;border-radius:10px;padding:10px 14px;margin:12px 0;font-size:12.5px;color:#92400e}
 .apont.ignbox{background:#fffbeb;border-color:#fcd34d}.apont.ignbox h4{color:#92400e}
@@ -250,7 +259,7 @@ table.hist td{font-size:12px}
 <body>
 <div class="wrap">
   <div class="app-header">
-    <img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo_did.png" alt="Diretoria de Inteligência de Dados" class="app-logo" onerror="this.style.display='none'">
+    <img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo-did.png" alt="Diretoria de Inteligência de Dados" class="app-logo" onerror="this.style.display='none'">
     <div class="app-title-group">
       <h1>GESTOR MAPEADO</h1>
       <h2>Secretaria Municipal de Saúde - SEMSA · Competência <span id="hComp"></span></h2>
@@ -279,7 +288,7 @@ table.hist td{font-size:12px}
 <div class="footer">
   <div class="footer-left"><img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo_pmm_white.png" alt="Prefeitura de Manaus" class="footer-logo" onerror="this.style.display='none'"></div>
   <div class="footer-center">
-    <img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo_did.png" alt="DID" onerror="this.style.display='none'">
+    <img src="https://gmnadroj.github.io/CONSULTA-SERVIDOR-PVD/logo-did.png" alt="DID" onerror="this.style.display='none'">
     <div>Diretoria de Inteligência de Dados</div>
     <div>Gerência de Análise e Estatística</div>
     <div>DID © 2026</div>
@@ -366,7 +375,8 @@ function save(){
 /* ================= UTIL ================= */
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const count = arr => (arr||[]).filter(c => !c.off).length;
+const conta = c => !c.off || !!c.conta;
+const count = arr => (arr||[]).filter(conta).length;
 const rowTeams = (r, cols) => teamCols(cols).reduce((a,k) => a + count(r.f[k]), 0);
 const rowEas = r => 1 + count(r.f.vinc);
 const classif = eas => eas > 1 ? 'GESTOR MAPEADO' : 'ESTABELECIMENTO';
@@ -408,16 +418,16 @@ function renderTabs(){
 }
 function chipHTML(c, k, i){
   const mt = c.mot ? `Último registro: ${c.mot.acao} em ${fmtTs(c.mot.ts)} — ${c.mot.motivo}. ` : '';
-  return `<span class="chip k-${k}${c.off?' off':''}${c.hl?' hl':''}${c.mot?' has-h':''}" data-i="${i}" title="${esc(mt)}${c.hl?'Equipe realçada (conta na quantidade). ':''}${c.off?'Desativado — não entra na contagem. ':''}Duplo clique para editar">`+
-    `<span class="t">${c.hl?'★ ':''}${esc(c.v)}</span>`+
+  return `<span class="chip k-${k}${c.off?' off':''}${c.off&&c.conta?' conta':''}${c.hl?' hl':''}${c.mot?' has-h':''}" data-i="${i}" title="${esc(mt)}${c.hl?'Equipe realçada (conta na quantidade). ':''}${c.off ? (c.conta ? 'Desativado, mas CONTA na quantidade. ' : 'Desativado — não entra na contagem. ') : ''}Duplo clique para editar">`+
+    `<span class="t">${c.hl?'★ ':''}${esc(c.v)}</span>${c.off&&c.conta?'<span class="ctag" title="Desativada, mas conta na quantidade">conta</span>':''}`+
     (isLog(k) ? `<button data-act="hl" title="${c.hl?'Remover realce':'Realçar equipe (continua contando)'}">${c.hl?'☆':'★'}</button><button data-act="mv" title="Remanejar para outro estabelecimento">⇄</button>` : '')+
     `<button data-act="toggle" title="${c.off?'Reativar':'Marcar como desativado (não conta)'}">${c.off?'↺':'⊘'}</button>`+
     `<button data-act="rm" title="Remover">×</button></span>`;
 }
 function chipBox(arr, k, path, ph){
   let cnt = '';
-  if (isLog(k)){ const a = arr||[], n = count(a), off = a.length - n, hl = a.filter(c=>c.hl && !c.off).length;
-    cnt = `<span class="ccount${n?'':' z'}" title="${n} ${COLS[k].l} contando${hl?` (${hl} realçada${hl>1?'s':''})`:''}${off?` · ${off} desativada${off>1?'s':''} (não conta${off>1?'m':''})`:''}">${n}${off?`<small>+${off}⊘</small>`:''}</span>`; }
+  if (isLog(k)){ const a = arr||[], n = count(a), off = a.length - n, hl = a.filter(c=>c.hl && conta(c)).length, offc = a.filter(c=>c.off && c.conta).length;
+    cnt = `<span class="ccount${n?'':' z'}" title="${n} ${COLS[k].l} contando${hl?` (${hl} realçada${hl>1?'s':''})`:''}${offc?` (${offc} desativada${offc>1?'s':''} que conta${offc>1?'m':''})`:''}${off?` · ${off} desativada${off>1?'s':''} (não conta${off>1?'m':''})`:''}">${n}${off?`<small>+${off}⊘</small>`:''}</span>`; }
   return `<div class="chipbox${cnt?' wc':''}" data-path="${path}" data-k="${k}">${cnt}${(arr||[]).map((c,i)=>chipHTML(c,k,i)).join('')}`+
     `<input placeholder="${ph||'+ Enter'}" aria-label="Adicionar ${COLS[k]?COLS[k].l:'item'}"></div>`;
 }
@@ -627,7 +637,7 @@ $('#reset').onclick = () => { if (confirm('Restaurar os dados originais da plani
   logHist({tab:'—', est:'(todos)', col:'—', eq:'—', acao:'Outros', de:'', para:'Dados originais da planilha', motivo:'Restauração dos dados originais', resp:''}); save(); render(); toast('Dados originais restaurados (histórico mantido)'); } };
 
 /* ================= EXPORTAÇÃO ================= */
-const joinChips = a => (a||[]).map(c => (c.hl ? '*' : '') + (c.off ? `${c.v} (desat.)` : c.v)).join(', ') || '-';
+const joinChips = a => (a||[]).map(c => (c.hl ? '*' : '') + (c.off ? `${c.v} (desat.${c.conta?', conta':''})` : c.v)).join(', ') || '-';
 function tableData(tab){
   // retorna lista de {titulo, head, body, foot, obs}
   const d = state.tabs[tab.id], out = [];
@@ -878,7 +888,7 @@ function analisar(f){
   if (x){
     const tc = teamCols(x.cols), gest = [];
     const rowsForTeams = (x.bloco && x.base) ? x.bloco.rows : [x.row];
-    rowsForTeams.forEach(r => tc.forEach(k => (r.f[k]||[]).forEach(ch => gest.push({k, v:ch.v, off:!!ch.off, key:chipKey(ch.v), used:false}))));
+    rowsForTeams.forEach(r => tc.forEach(k => (r.f[k]||[]).forEach(ch => gest.push({k, v:ch.v, off:!conta(ch), key:chipKey(ch.v), used:false}))));
     eqs.forEach(e => {
       const k = TIPO_KEY[e.sigla] || null;
       let g = gest.find(g => !g.used && g.key===e.key && (!k || g.k===k));
@@ -898,7 +908,7 @@ function analisar(f){
       res.apont.push(`Equipe ${COLS[g.k].l} ${g.v} está mapeada no Gestor Mapeado, mas NÃO foi exportada no protocolo. Verificar no SCNES local se a equipe está ativa e vinculada ao estabelecimento.`);
     });
     // estabelecimentos
-    const vinc = x.cols.includes('vinc') ? (x.row.f.vinc||[]).map(ch => ({v:ch.v, off:!!ch.off, key:estKey(ch.v), used:false})) : [];
+    const vinc = x.cols.includes('vinc') ? (x.row.f.vinc||[]).map(ch => ({v:ch.v, off:!conta(ch), key:estKey(ch.v), used:false})) : [];
     const mainKey = estKey(x.row.nome);
     let mainFound = false;
     ests.forEach(e => {
@@ -950,6 +960,63 @@ async function ignorarCriticas(f){
 }
 document.addEventListener('click', e => { const b = e.target.closest('[data-qign]'); if (b){ const f = qrpFiles.find(q=>q.id===b.dataset.qign); if (f) ignorarCriticas(f); } });
 
+/* --- reanálise --- */
+const statusTxt = f => envioOk(f) ? 'VALIDADO' : 'REJEITADO';
+function registrarAnalise(f, nota){
+  const antes = (f.analises||[]).slice(-1)[0], st = statusTxt(f);
+  (f.analises = f.analises || []).push({ts:new Date().toISOString(), st, nota});
+  if (antes && antes.st !== st){
+    const r = f.erro ? null : analisar(f);
+    logHist({tab: r?.x ? r.x.tab.nome : (f.pasta?.distrito || '-'), rowId: r?.x?.row.id, est: qName(f, r), col:'—',
+      eq:`QRP ${f.pasta?.padrao ? 'ID '+f.pasta.id+' ' : ''}${f.pasta?.envio||''}`.trim(), acao:'Reanálise', de:antes.st, para:st, motivo: nota || 'Reanálise do protocolo', resp:''});
+    save();
+  }
+  return {antes: antes?.st, st};
+}
+async function reanalisar(f, silencioso){
+  if (f.file){
+    try { const d = parseQRP(await f.file.arrayBuffer()); f.data = d; delete f.erro; f.mainCnes = null; }
+    catch(e){
+      if (e && /NotReadable|NotFound/i.test(e.name || '')){ if (!silencioso) { toast('O arquivo mudou no disco — selecione novamente a pasta/arquivo do envio'); substituirArquivos(f); } return null; }
+      f.erro = e.message;
+    }
+  }
+  const res = registrarAnalise(f, 'Reanálise');
+  if (!silencioso){ render(); toast(res.antes && res.antes !== res.st ? `Reanálise: ${res.st} (antes ${res.antes})` : `Reanálise concluída: ${res.st}`); }
+  return res;
+}
+let subAlvo = null;
+function substituirArquivos(f){
+  subAlvo = f;
+  let inp = document.getElementById(f.porPasta ? 'qSubDir' : 'qSubFile');
+  if (!inp){ inp = document.createElement('input'); inp.type = 'file'; inp.hidden = true;
+    if (f.porPasta){ inp.id = 'qSubDir'; inp.webkitdirectory = true; } else { inp.id = 'qSubFile'; inp.accept = '.qrp,.QRP'; }
+    document.body.appendChild(inp);
+    inp.addEventListener('change', async ev => {
+      const t = subAlvo, files = [...ev.target.files]; ev.target.value = ''; if (!t || !files.length) return;
+      const g = groupEntries(files.map(x => ({file:x, path: x.webkitRelativePath || x.name}))).find(g => g.qrps.length);
+      if (!g){ toast('Nenhum arquivo .qrp encontrado na seleção'); return; }
+      const file = g.qrps[0];
+      try { t.data = parseQRP(await file.arrayBuffer()); delete t.erro; } catch(e){ t.erro = e.message; }
+      t.file = file; t.nome = file.name; t.mainCnes = null;
+      if (g.dir){ t.pasta = g.pasta; t.porPasta = true; t.bcks = g.bcks; t.bckSz = g.bckSz; t.qrpsNaPasta = g.qrps.length; t.chave = g.dir + '/' + file.name; }
+      if (!t.matchId && t.data) t.matchId = autoMatch(t.data, t.pasta);
+      const res = registrarAnalise(t, 'Arquivos substituídos e reanalisados');
+      render(); toast(`Reanálise com novos arquivos: ${res.st}${res.antes && res.antes!==res.st ? ' (antes '+res.antes+')' : ''}`);
+    });
+  }
+  inp.click();
+}
+document.addEventListener('click', async e => {
+  const re = e.target.closest('[data-qre]'); if (re){ const f = qrpFiles.find(q=>q.id===re.dataset.qre); if (f) reanalisar(f); return; }
+  const sb = e.target.closest('[data-qsub]'); if (sb){ const f = qrpFiles.find(q=>q.id===sb.dataset.qsub); if (f) substituirArquivos(f); return; }
+  if (e.target.id === 'qreAll'){
+    const l = qVisible(qSorted()); let mud = 0, falha = 0;
+    for (const f of l){ const r = await reanalisar(f, true); if (!r) falha++; else if (r.antes && r.antes !== r.st) mud++; }
+    render(); toast(`${l.length - falha} envio(s) reanalisado(s) · ${mud} mudaram de situação${falha ? ` · ${falha} precisam ter os arquivos selecionados de novo` : ''}`);
+  }
+});
+
 /* --- interface --- */
 const ST = {ok:['✔','Confere','ok'], extra:['▲','Só no protocolo','warn'], falta:['▼','Não exportada','bad'], off:['⊘','Desativada no Gestor','warn'], tipo:['≠','Tipo divergente','warn'], na:['–','Sem vínculo','muted']};
 function rowOptions(sel){
@@ -993,7 +1060,7 @@ function renderQrp(){
   const vis = qVisible(qSorted());
   const cards = vis.map(f => {
     if (f.erro) return `<div class="qcard bad"><div class="qhead"><div class="qtoggle" style="cursor:default">${qIdent(f)}<span class="qest">${esc(qName(f))}</span>${qEnvio(f)}<span class="qstatus bad">✖ REJEITADO</span><span class="qcount">${esc(f.erro)}</span></div>
-      <div class="qacts"><button class="del" data-qrm="${f.id}" title="Remover">🗑</button></div></div></div>`;
+      <div class="qacts"><button class="btn btn-ghost btn-sm" data-qsub="${f.id}" title="Selecionar novamente a pasta/arquivo deste envio">↻ Substituir arquivos</button><button class="del" data-qrm="${f.id}" title="Remover">🗑</button></div></div></div>`;
     const d = f.data, r = analisar(f);
     const gestNome = r.x ? r.x.row.nome : null;
     const ign = !r.ok ? ignDe(f) : null, okv = r.ok || !!ign;
@@ -1009,6 +1076,7 @@ function renderQrp(){
           ${f.pasta?.data ? `<span class="qcount">enviado ${esc(f.pasta.data)}</span>` : ''}
         </button>
         <div class="qacts">
+          <button class="btn btn-ghost btn-sm" data-qre="${f.id}" title="Reanalisar este envio">↻</button>
           <button class="btn btn-ghost btn-sm" data-qpdf="${f.id}" title="PDF para o estabelecimento">⬇ PDF</button>
           <button class="del" data-qrm="${f.id}" title="Remover">🗑</button>
         </div>
@@ -1020,8 +1088,11 @@ function renderQrp(){
       <div class="qbar">
         <label class="field">Comparar com <select data-qmatch="${f.id}">${rowOptions(f.matchId)}</select></label>
         <span class="sep"></span>
+        <button class="btn btn-ghost" data-qre="${f.id}">↻ Reanalisar</button>
+        <button class="btn btn-ghost" data-qsub="${f.id}" title="Use quando o estabelecimento reenviar os arquivos">Substituir arquivos…</button>
         <button class="btn btn-success" data-qpdf="${f.id}">⬇ PDF para o estabelecimento</button>
       </div>
+      ${(f.analises||[]).length ? `<div class="qanal">${f.analises.slice().reverse().map((a,j,l) => `<span class="${j?'':'cur'}">Análise ${l.length-j} · ${fmtTs(a.ts)} · <b class="${a.st==='VALIDADO'?'v':'r'}">${a.st}</b>${a.nota?' · '+esc(a.nota):''}</span>`).join('')}</div>` : ''}
       <div class="table-wrap"><table class="qt">
         <thead><tr><th>#</th><th>Crítica do Transmissor DID</th><th>Gestor Mapeado / Parâmetro</th><th>Protocolo / Envio</th><th class="num">Situação</th></tr></thead>
         <tbody>${r.criticas.map(k=>`<tr><td>${k.n}</td><td><b>${k.nome}</b></td><td>${esc(k.esperado)}</td><td>${esc(k.obtido)}</td>
@@ -1075,6 +1146,7 @@ function renderQrp(){
       <span class="sep"></span>
       <span class="qcount">${vis.length} de ${qrpFiles.length}</span>
       <button class="btn btn-success btn-sm" id="qpdfAll">⬇ PDF dos exibidos</button>
+      <button class="btn btn-ghost btn-sm" id="qreAll" title="Reanalisa os envios exibidos">↻ Reanalisar exibidos</button>
       <button class="btn btn-ghost btn-sm" id="qopenAll">Exibir análises</button><button class="btn btn-ghost btn-sm" id="qcloseAll">Recolher</button>
       <button class="btn btn-danger-ghost btn-sm" id="qclear">Limpar lista</button>
     </div>`:''}
@@ -1107,7 +1179,7 @@ function analyzeGroups(groups){
     g.qrps.forEach(file => {
       const chave = g.dir + '/' + file.name; if (vistos.has(chave)) return; vistos.add(chave);
       jobs.push(file.arrayBuffer().then(buf => {
-        const f = {id:uid(), chave, nome:file.name, pasta, porPasta, bcks:g.bcks, bckSz:g.bckSz, qrpsNaPasta:g.qrps.length};
+        const f = {id:uid(), chave, nome:file.name, pasta, porPasta, bcks:g.bcks, bckSz:g.bckSz, qrpsNaPasta:g.qrps.length, file};
         try { f.data = parseQRP(buf); f.matchId = autoMatch(f.data, pasta); } catch(e){ f.erro = e.message; }
         return f;
       }));
@@ -1115,7 +1187,7 @@ function analyzeGroups(groups){
   });
   if (!jobs.length){ toast('Esses envios já estão na lista'); return; }
   $('#qprog') && ($('#qprog').textContent = `Lendo ${jobs.length} protocolo(s)…`);
-  Promise.all(jobs).then(arr => { qrpFiles = qrpFiles.concat(arr); render(); toast(`${arr.length} envio(s) analisado(s)`); });
+  Promise.all(jobs).then(arr => { const ts = new Date().toISOString(); arr.forEach(f => f.analises = [{ts, st:statusTxt(f)}]); qrpFiles = qrpFiles.concat(arr); render(); toast(`${arr.length} envio(s) analisado(s)`); });
 }
 /* seleção de pastas: com mais de uma pasta de envio, abre a lista para marcar */
 let qStage = null;   // {groups:[...], f:{q,dist,envio}}
@@ -1508,7 +1580,7 @@ document.addEventListener('click', e => {
 /* ================= HISTÓRICO DE ALTERAÇÕES (motivo obrigatório) ================= */
 const LOG_COLS = ['esf','eap','eapp','esb','emulti','ecr','vinc'];
 const isLog = k => LOG_COLS.includes(k);
-const ACOES = ['Inclusão','Alteração','Desativação','Reativação','Remanejamento','Realce','Remoção de realce','Exclusão','Críticas ignoradas','Críticas reconsideradas','Outros'];
+const ACOES = ['Inclusão','Alteração','Desativação','Reativação','Remanejamento','Realce','Remoção de realce','Exclusão','Críticas ignoradas','Críticas reconsideradas','Reanálise','Outros'];
 let histF = {q:'', tab:'', acao:'', row:''};
 const tabNome = path => (TABS.find(t => t.id === String(path).split('.')[0]) || {}).nome || '-';
 const fmtTs = ts => new Date(ts).toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
@@ -1525,12 +1597,15 @@ function pedirMotivo(o){
   return new Promise(resolve => {
     let resp = ''; try { resp = localStorage.getItem(KEY+'.resp') || ''; } catch(_){}
     const wrap = document.createElement('div'); wrap.className = 'modal';
-    const tipos = o.tipos || ACOES.filter(a => !/Críticas|realce|Realce/.test(a));
+    const tipos = o.tipos || ACOES.filter(a => !/Críticas|realce|Realce|Reanálise/.test(a));
     wrap.innerHTML = `<div class="mbox" role="dialog" aria-modal="true">
       <div class="mhead">${esc(o.titulo || 'Registrar motivo da alteração')}</div>
       <div class="mres">${o.linhas.map(l => `<div>${l}</div>`).join('')}</div>
       ${o.remanejar ? `<label class="mlab">Remanejar para o estabelecimento<select id="mDest">${rowOptions('')}</select></label>
         <label class="mlab">Coluna de destino<select id="mCol"></select></label>` : ''}
+      ${o.conta ? `<div class="mlab">Na quantidade (Qtde.)
+        <label class="mrad"><input type="radio" name="mConta" value="0" checked> <span><b>Não contar</b> — a equipe/unidade sai da Qtde.</span></label>
+        <label class="mrad"><input type="radio" name="mConta" value="1"> <span><b>Continuar contando</b> — fica desativada, mas aparece na Qtde.</span></label></div>` : ''}
       <label class="mlab">Tipo de alteração<select id="mTipo">${tipos.map(t => `<option${t===o.tipo?' selected':''}>${t}</option>`).join('')}</select></label>
       <label class="mlab"><span>Motivo <span class="req">*</span></span><textarea id="mMot" rows="3" placeholder="Descreva o motivo (ex.: equipe desativada no SCNES por falta de profissional; remanejada conforme memorando nº…)"></textarea></label>
       <label class="mlab">Responsável<input id="mResp" value="${esc(resp)}" placeholder="Nome de quem registra"></label>
@@ -1558,7 +1633,7 @@ function pedirMotivo(o){
         if (d === o.remanejar.rowId && c === o.remanejar.k){ q('#mErr').textContent = 'O destino é igual à origem.'; return; }
       }
       try { localStorage.setItem(KEY+'.resp', r); } catch(_){}
-      close({tipo:q('#mTipo').value, motivo, resp:r, dest: o.remanejar ? q('#mDest').value : null, col: o.remanejar ? q('#mCol').value : null});
+      close({tipo:q('#mTipo').value, motivo, resp:r, conta: o.conta ? (wrap.querySelector('input[name=mConta]:checked')?.value === '1') : false, dest: o.remanejar ? q('#mDest').value : null, col: o.remanejar ? q('#mCol').value : null});
     };
     setTimeout(() => q('#mMot').focus(), 30);
   });
@@ -1603,12 +1678,14 @@ async function acaoChip(path, k, i, act){
     refresh(path, k); toast(`${m.tipo} registrado no histórico`); return;
   }
   const tipo = act==='rm' ? 'Exclusão' : ch.off ? 'Reativação' : 'Desativação';
-  const m = await pedirMotivo({tipo, linhas:[linhaCtx(c, `Equipe <b>${esc(ch.v)}</b>`), `Ação: <b>${tipo}</b>`]});
+  const m = await pedirMotivo({tipo, conta: tipo==='Desativação', linhas:[linhaCtx(c, `Equipe <b>${esc(ch.v)}</b>`), `Ação: <b>${tipo}</b>`]});
   if (!m) return;
+  const antes = ch.off ? (ch.conta ? 'Desativada (conta)' : 'Desativada (não conta)') : 'Ativa';
   if (act==='rm') arr.splice(i,1);
-  else { ch.off = !ch.off; ch.mot = {acao:m.tipo, motivo:m.motivo, ts:new Date().toISOString()}; }
+  else { ch.off = !ch.off; if (ch.off) ch.conta = !!m.conta; else delete ch.conta; ch.mot = {acao:m.tipo, motivo:m.motivo, ts:new Date().toISOString()}; }
+  const depois = act==='rm' ? '(removida)' : ch.off ? (ch.conta ? 'Desativada (conta)' : 'Desativada (não conta)') : 'Ativa';
   logHist({tabId:path.split('.')[0], tab:c.tab, rowId:c.row.id, est:c.row.nome, col:c.col, eq:ch.v, acao:m.tipo,
-    de: act==='rm' ? ch.v : (ch.off ? 'Ativa' : 'Desativada'), para: act==='rm' ? '(removida)' : (ch.off ? 'Desativada' : 'Ativa'), motivo:m.motivo, resp:m.resp});
+    de: act==='rm' ? ch.v : antes, para: depois, motivo:m.motivo, resp:m.resp});
   refresh(path, k); toast(`${m.tipo} registrada no histórico`);
 }
 async function editarChip(path, k, i, novo){
