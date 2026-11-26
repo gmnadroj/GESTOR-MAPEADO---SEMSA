@@ -230,6 +230,7 @@ table.hist td{font-size:12px}
 .ccount{position:absolute;top:2px;left:4px;font-size:10.5px;font-weight:900;color:var(--navy2);background:#e0f2fe;border-radius:9999px;padding:1px 8px;line-height:15px;font-variant-numeric:tabular-nums}
 .ccount.z{background:#f1f5f9;color:#94a3b8}
 .ccount small{font-size:9px;font-weight:700;color:#94a3b8;margin-left:4px}
+.qdet{margin-top:4px}.qdet summary{cursor:pointer;font-weight:700;color:var(--sky-d);font-size:13px;margin-bottom:10px}
 .qanal{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--muted);margin:-4px 0 12px;padding-left:10px;border-left:3px solid var(--line)}
 .qanal .cur{color:var(--ink);font-weight:600}
 .qanal b.v{color:#059669}.qanal b.r{color:#be123c}
@@ -759,6 +760,15 @@ function teamKey(nome, tipo){
 const chipKey = v => { const k = nkey(v); return /^\d+$/.test(k) ? String(+k) : k; };
 function cmpVer(a,b){ const x=a.split('.').map(Number), y=b.split('.').map(Number); for(let i=0;i<Math.max(x.length,y.length);i++){ const d=(x[i]||0)-(y[i]||0); if(d) return d<0?-1:1; } return 0; }
 
+/* chaves equivalentes de uma equipe: com e sem a sigla do tipo no início (ex.: "ECR 01 ROSA" = "01 ROSA"; "ESF-119" = "119") */
+const SIGLA_COL = {esf:'ESF', eap:'EAP', eapp:'EAPP', esb:'ESB', emulti:'EMULTI', ecr:'ECR'};
+function chaveEquipe(nome, tipo){
+  const sig = SIGLA_COL[tipo] || norm(tipo||'').replace(/[^A-Z]/g,'');
+  const ks = new Set([chipKey(nome), teamKey(nome, sig)]);
+  ['EAPP','EMULTI','ESF','EAP','ESB','ECR'].forEach(p => ks.add(teamKey(nome, p)));
+  ks.delete('');
+  return [...ks];
+}
 /* --- leitura do .qrp (relatório EMF com texto UTF-16) --- */
 function parseQRP(buf){
   const u8 = new Uint8Array(buf), dv = new DataView(buf), items = [];
@@ -835,7 +845,16 @@ function parsePasta(nome){
   const ord = m[5] ? m[5].slice(4,8)+m[5].slice(2,4)+m[5].slice(0,2)+m[5].slice(8) : '';
   return {padrao:true, raw:nome, distrito:norm(m[1]).trim(), id:m[2], nome:m[3].trim(), envio: /final/i.test(m[4]) ? 'FINAL' : 'PRÉVIA', data, ord};
 }
+/* Envios "DISTRITO DE SAUDE OESTE / RURAL" = bases centralizadas -> aba DISA OESTE / RURAL CENTR (totais do bloco) */
+function baseCentral(d, pasta){
+  const nomes = [pasta?.nome || '', ...(d.estabelecimentos||[]).map(e => e.nome)].map(norm);
+  const alvo = nomes.some(n => /DISTRITO DE SAUDE OESTE/.test(n)) ? 'OESTE' : nomes.some(n => /DISTRITO DE SAUDE RURAL/.test(n)) ? 'RURAL' : null;
+  if (!alvo) return null;
+  const b = (state.tabs.centr?.blocos || []).find(b => norm(b.titulo).includes(alvo));
+  return b && b.rows[0] ? b.rows[0].id : null;
+}
 function autoMatch(d, pasta){
+  const bc = baseCentral(d, pasta); if (bc) return bc;
   const rows = allRows(); let best=null, score=0;
   const pref = pasta && pasta.padrao ? (DIST_TABS[pasta.distrito] || []) : [];
   const nomes = [];
@@ -876,11 +895,14 @@ function analisar(f){
   add(3,'Tipo de exportação', 'Completa', d.tipo||'não informado', norm(d.tipo)==='COMPLETA',
     `Tipo de exportação "${d.tipo||'-'}". A exportação deve ser do tipo COMPLETA: refazer a exportação selecionando "Completa".`);
   const ests = d.estabelecimentos, eqs = d.equipes;
-  add(4,'Nº de estabelecimentos', espEas ?? '—', d.totalEst, espEas!==null && d.totalEst===espEas,
+  const ehBase = !!(x && x.bloco && x.base), sufBase = ehBase ? ' (total da base centralizada)' : '';
+  add(4,'Nº de estabelecimentos'+sufBase, espEas ?? '—', d.totalEst, espEas!==null && d.totalEst===espEas,
     espEas===null ? 'Estabelecimento não localizado no Gestor Mapeado: selecione o estabelecimento correspondente para comparar.' :
+    ehBase ? `A base centralizada exportou ${d.totalEst} estabelecimento(s), mas a aba ${x.tab.nome} informa TOTAL EAS ${espEas} (${x.bloco.titulo}). Conferir na base local do SCNES os estabelecimentos incluídos/excluídos ou atualizar o total no Gestor Mapeado.` :
     `O protocolo exportou ${d.totalEst} estabelecimento(s), mas o Gestor Mapeado prevê ${espEas} (Qtde. EAS). Verificar no SCNES local as unidades vinculadas exportadas (detalhamento abaixo).`);
-  add(5,'Nº de equipes', espEq ?? '—', d.totalEq, espEq!==null && d.totalEq===espEq,
+  add(5,'Nº de equipes'+sufBase, espEq ?? '—', d.totalEq, espEq!==null && d.totalEq===espEq,
     espEq===null ? null :
+    ehBase ? `A base centralizada exportou ${d.totalEq} equipe(s), mas a aba ${x.tab.nome} informa TOTAL EQUIPES ${espEq} (${x.bloco.titulo}). Conferir na base local do SCNES as equipes ativas ou atualizar o total no Gestor Mapeado.` :
     `O protocolo exportou ${d.totalEq} equipe(s), mas o Gestor Mapeado prevê ${espEq} (Qtde. Equipes). Conferir no SCNES as equipes ausentes/excedentes (detalhamento abaixo).`);
   add(6,'Destino', 'Município P. Gestão', d.destino||'não informado', norm(d.destino).replace(/\s+/g,' ')==='MUNICIPIO P. GESTAO',
     `Destino da exportação "${d.destino||'-'}". Refazer a exportação com destino "Município P. Gestão".`);
@@ -897,14 +919,24 @@ function analisar(f){
   if (d.equipes.length !== d.totalEq) res.apont.push(`Inconsistência interna do protocolo: ${d.equipes.length} equipe(s) listada(s) e TOTAL informado ${d.totalEq}.`);
 
   // detalhamento: equipes
-  if (x){
+  if (x && x.bloco && x.base){
+    // base centralizada: a conferência é pelos totais informados na aba DISA OESTE / RURAL CENTR
+    const porTipo = {}; eqs.forEach(e => porTipo[e.sigla || 'OUTROS'] = (porTipo[e.sigla || 'OUTROS'] || 0) + 1);
+    res.base = {titulo:x.bloco.titulo, eq:espEq, eas:espEas, porTipo};
+    eqs.forEach(e => res.equipes.push({nome:e.nome, ine:`${e.cnes} - ${e.area}`, tipo:e.sigla, gestor:'Base centralizada', st:'base'}));
+    ests.forEach(e => res.ests.push({cnes:e.cnes, nome:e.nome, gestor:'Base centralizada', st:'base'}));
+    res.avisos.push(`Base centralizada: conferida pelos totais informados na aba ${x.tab.nome} (${x.bloco.titulo}: Qtde. Equipes ${espEq} · Qtde. EAS ${espEas}). A conferência equipe a equipe não se aplica.`);
+  } else if (x){
     const tc = teamCols(x.cols), gest = [];
     const rowsForTeams = (x.bloco && x.base) ? x.bloco.rows : [x.row];
-    rowsForTeams.forEach(r => tc.forEach(k => (r.f[k]||[]).forEach(ch => gest.push({k, v:ch.v, off:!conta(ch), key:chipKey(ch.v), used:false}))));
+    rowsForTeams.forEach(r => tc.forEach(k => (r.f[k]||[]).forEach(ch => gest.push({k, v:ch.v, off:!conta(ch), keys:chaveEquipe(ch.v, k), used:false}))));
     eqs.forEach(e => {
       const k = TIPO_KEY[e.sigla] || null;
-      let g = gest.find(g => !g.used && g.key===e.key && (!k || g.k===k));
-      if (!g) g = gest.find(g => !g.used && g.key===e.key);
+      const ek = chaveEquipe(e.nome, k || e.sigla);
+      // igual, ou nome curto do Gestor (ex.: "ECR01") como início do nome completo do protocolo ("ECR 01 ROSA…"), sem confundir 1 com 12
+      const casa = g => g.keys.some(x => ek.includes(x) || (x.length >= 3 && /[A-Z]/.test(x) && ek.some(y => y.length > x.length && y.startsWith(x) && !/\d/.test(y[x.length]))));
+      let g = gest.find(g => !g.used && casa(g) && (!k || g.k===k));
+      if (!g) g = gest.find(g => !g.used && casa(g));
       if (g){ g.used = true;
         const tipoDiv = k && g.k!==k;
         res.equipes.push({nome:e.nome, ine:`${e.cnes} - ${e.area}`, tipo:e.sigla, gestor:`${COLS[g.k].l}: ${g.v}`, st: g.off?'off':tipoDiv?'tipo':'ok'});
@@ -1030,7 +1062,7 @@ document.addEventListener('click', async e => {
 });
 
 /* --- interface --- */
-const ST = {ok:['✔','Confere','ok'], extra:['▲','Só no protocolo','warn'], falta:['▼','Não exportada','bad'], off:['⊘','Desativada no Gestor','warn'], tipo:['≠','Tipo divergente','warn'], na:['–','Sem vínculo','muted']};
+const ST = {base:['•','Base centralizada','muted'], ok:['✔','Confere','ok'], extra:['▲','Só no protocolo','warn'], falta:['▼','Não exportada','bad'], off:['⊘','Desativada no Gestor','warn'], tipo:['≠','Tipo divergente','warn'], na:['–','Sem vínculo','muted']};
 function rowOptions(sel){
   const groups = {};
   allRows().forEach(x => (groups[x.tab.nome] = groups[x.tab.nome] || []).push(x));
@@ -1118,6 +1150,13 @@ function renderQrp(){
         : !r.ok ? `<div class="ignbar"><span>Após a análise, se as críticas não procederem, é possível validar o envio registrando o motivo.</span><button class="btn btn-warn btn-sm" data-qign="${f.id}">Ignorar críticas e validar…</button></div>` : ''}
       ${r.apont.length ? `<div class="apont"><h4>Apontamentos para correção</h4><ol>${r.apont.map(a=>`<li>${esc(a)}</li>`).join('')}</ol></div>` : `<div class="apont good"><h4>Nenhuma correção necessária</h4>O protocolo está de acordo com o Gestor Mapeado e com as críticas do Transmissor DID.</div>`}
       ${r.avisos.length ? `<div class="apont aviso"><h4>Observações (não bloqueiam a validação)</h4><ul>${r.avisos.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div>` : ''}
+      ${r.base ? `<div class="bloco-title">Base centralizada × ${esc(r.x.tab.nome)}</div>
+        <div class="table-wrap" style="margin-bottom:12px"><table class="qt"><thead><tr><th>Item</th><th class="num">Protocolo (.qrp)</th><th class="num">Gestor Mapeado (${esc(r.base.titulo)})</th><th class="num">Situação</th></tr></thead><tbody>
+          <tr><td><b>Total de equipes</b></td><td class="num">${d.totalEq}</td><td class="num">${r.base.eq}</td><td class="num"><span class="pill ${d.totalEq===r.base.eq?'ok':'bad'}">${d.totalEq===r.base.eq?'✔ Confere':'✖ Diverge ('+(d.totalEq-r.base.eq>0?'+':'')+(d.totalEq-r.base.eq)+')'}</span></td></tr>
+          <tr><td><b>Total de estabelecimentos (EAS)</b></td><td class="num">${d.totalEst}</td><td class="num">${r.base.eas}</td><td class="num"><span class="pill ${d.totalEst===r.base.eas?'ok':'bad'}">${d.totalEst===r.base.eas?'✔ Confere':'✖ Diverge ('+(d.totalEst-r.base.eas>0?'+':'')+(d.totalEst-r.base.eas)+')'}</span></td></tr>
+          ${Object.entries(r.base.porTipo).sort().map(([t,n]) => `<tr><td class="qcount">Equipes ${esc(t)} no protocolo</td><td class="num">${n}</td><td class="num qcount">—</td><td></td></tr>`).join('')}
+        </tbody></table></div>
+        <details class="qdet"><summary>Ver as ${r.equipes.length} equipes e ${r.ests.length} estabelecimentos exportados na base</summary>` : ''}
       <div class="qgrid">
         <div><div class="bloco-title">Equipes exportadas × Gestor Mapeado</div>
           <div class="table-wrap"><table class="qt"><thead><tr><th>Equipe</th><th>CNES - Área</th><th>Tipo</th><th>Gestor Mapeado</th><th>Situação</th></tr></thead>
@@ -1125,7 +1164,7 @@ function renderQrp(){
         <div><div class="bloco-title">Estabelecimentos exportados × Gestor Mapeado</div>
           <div class="table-wrap"><table class="qt"><thead><tr><th>CNES</th><th>Estabelecimento</th><th>Gestor Mapeado</th><th>Situação</th></tr></thead>
           <tbody>${r.ests.map(e=>`<tr><td>${esc(e.cnes)}</td><td><b>${esc(e.nome)}</b></td><td>${esc(e.gestor)}</td><td><span class="pill ${ST[e.st][2]}">${ST[e.st][0]} ${ST[e.st][1]}</span></td></tr>`).join('')}</tbody></table></div></div>
-      </div></div>` : ''}
+      </div>${r.base ? '</details>' : ''}</div>` : ''}
     </div>`;
   }).join('');
   const all = qrpFiles.map(envioOk), ok = all.filter(Boolean).length;
@@ -1356,7 +1395,7 @@ function qrpPDF(files){
     const p = f.pasta;
     [ ...(p && p.padrao ? [`Distrito de envio: ${p.distrito}     ID do Transmissor: ${p.id}     Envio: ${p.envio}${p.data?'  ('+p.data+')':''}`] : []),
       ...(p ? [`Pasta: ${p.raw}`] : []),
-      `Gestor Mapeado: ${r.x ? r.x.row.nome+' — '+r.x.tab.nome : 'não vinculado'}     CNES: ${d.estabelecimentos.map(e=>e.cnes).join(', ')||'-'}`,
+      `Gestor Mapeado: ${r.x ? r.x.row.nome+' — '+r.x.tab.nome : 'não vinculado'}     CNES: ${d.estabelecimentos.length > 3 ? d.estabelecimentos[0].cnes+' e mais '+(d.estabelecimentos.length-1) : (d.estabelecimentos.map(e=>e.cnes).join(', ')||'-')}`,
       `Base informada no protocolo: ${d.arquivo || '-'}`,
       ...(f.porPasta ? [`Base (.bck) na pasta: ${f.bcks.join(', ')||'ausente'}`] : []),
       `Gerado em: ${d.geracao||'-'}     Município: ${d.municipio||'-'}     Origem: ${d.origem||'-'}`,
@@ -1391,10 +1430,13 @@ function qrpPDF(files){
       doc.autoTable({ startY:y+2, margin:{left:12,right:12,top:28}, theme:'grid', head:[head], body,
         styles:{fontSize:8, cellPadding:1.8, lineColor:[203,213,225], lineWidth:.15, textColor:[15,23,42]},
         headStyles:{fillColor:[240,248,255], textColor:[51,65,85]},
-        didParseCell: c => { if (c.section==='body' && c.column.index===head.length-1){ const k = Object.values(ST).find(s=>s[1]===c.cell.raw); if (k) { c.cell.styles.textColor = colors[k[2]]; c.cell.styles.fontStyle='bold'; } } },
+        didParseCell: c => { if (c.section==='body' && c.column.index===head.length-1){ const k = c.cell.raw==='Diverge' ? ['','','bad'] : Object.values(ST).find(s=>s[1]===c.cell.raw); if (k) { c.cell.styles.textColor = colors[k[2]]; c.cell.styles.fontStyle='bold'; } } },
         didDrawPage: header });
       y = doc.lastAutoTable.finalY + 4;
     };
+    if (r.base) sec(`BASE CENTRALIZADA × ${r.x.tab.nome} (${r.base.titulo})`, ['Item','Protocolo (.qrp)','Gestor Mapeado','Situação'],
+      [['Total de equipes', d.totalEq, r.base.eq, d.totalEq===r.base.eq ? 'Confere' : 'Diverge'], ['Total de estabelecimentos (EAS)', d.totalEst, r.base.eas, d.totalEst===r.base.eas ? 'Confere' : 'Diverge'],
+       ...Object.entries(r.base.porTipo).sort().map(([t,n]) => [`Equipes ${t} no protocolo`, n, '-', ''])]);
     sec(`EQUIPES — protocolo: ${d.totalEq}  ·  Gestor Mapeado: ${r.criticas[4].esperado}`, ['Equipe','CNES - Área','Tipo','Gestor Mapeado','Situação'], r.equipes.map(e=>[e.nome,e.ine,e.tipo,e.gestor,ST[e.st][1]]));
     sec(`ESTABELECIMENTOS — protocolo: ${d.totalEst}  ·  Gestor Mapeado: ${r.criticas[3].esperado}`, ['CNES','Estabelecimento','Gestor Mapeado','Situação'], r.ests.map(e=>[e.cnes,e.nome,e.gestor,ST[e.st][1]]));
     if (!okv && y < H-40){ y += 6; doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(100,116,139);
